@@ -4,9 +4,15 @@
 .project
 .settings/
 
+# IntelliJ
+.idea
+
 # Mac
 .DS_Store
 
 
 # outputs
 *.cs
+/.gradle/
+bin/
+build
