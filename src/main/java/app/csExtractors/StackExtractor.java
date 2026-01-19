@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ClassObjectReference;
 import com.sun.jdi.Field;
@@ -21,6 +20,7 @@ import com.sun.jdi.StackFrame;
 import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 
+import app.config.LoggingConfig;
 import app.logging.ILoggerFormat;
 import app.logging.LoggerJson;
 
@@ -52,19 +52,14 @@ public class StackExtractor {
 	/**
 	 * Constructor of StackExtractor
 	 * 
-	 * @param loggerInfos information to instantiate the logger
+	 * @param loggingConfig information to instantiate the logger
 	 */
-	public StackExtractor(JsonNode loggerInfos, int depth) {
-		if (loggerInfos == null || !loggerInfos.has("format") || !loggerInfos.has("outputName")
-				|| !loggerInfos.has("extension")) {
-			throw new IllegalArgumentException(
-					"Missing required fields in loggerInfos: 'format', 'outputName', or 'extension'");
-		}
+	public StackExtractor(LoggingConfig loggingConfig, int depth) {
 
 		// logger creation
-		String format = loggerInfos.get("format").textValue();
-		String outputName = loggerInfos.get("outputName").textValue();
-		String extension = loggerInfos.get("extension").textValue();
+		String format = loggingConfig.getFormat();
+		String outputName = loggingConfig.getOutputName();
+		String extension = loggingConfig.getExtension();
 
 		if (!loggerChoice.containsKey(format)) {
 			throw new IllegalArgumentException("Logger format not recognized: " + format);

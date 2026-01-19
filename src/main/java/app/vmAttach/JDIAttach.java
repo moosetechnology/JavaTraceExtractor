@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.sun.jdi.Bootstrap;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.VirtualMachineManager;
@@ -12,16 +11,18 @@ import com.sun.jdi.connect.AttachingConnector;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 
+import app.config.VmConfig;
+
 public class JDIAttach {
 	
 	/**
 	 * Attach to a java virtual machine located with the given information
-	 * @param vmConfig all information needed to find the vm
+	 * @param config all information needed to find the vm
 	 * @return the Virtual Machine if one found
 	 * @throws IOException                        when unable to attach.
 	 * @throws IllegalConnectorArgumentsException if no connector socket can be used.
 	 */
-	public VirtualMachine attachToJDI(JsonNode vmConfig) throws IllegalConnectorArgumentsException, IOException {
+	public VirtualMachine attachToJDI(VmConfig config) throws IllegalConnectorArgumentsException, IOException {
 
 		VirtualMachineManager vmm = Bootstrap.virtualMachineManager();
 		AttachingConnector connector = null;
@@ -40,8 +41,8 @@ public class JDIAttach {
 		// Configure the arguments
 		Map<String, Connector.Argument> arguments = connector.defaultArguments();
 
-		arguments.get("hostname").setValue(vmConfig.get("host").textValue());
-		arguments.get("port").setValue(vmConfig.get("port").textValue()); // need to correspond to the JVM address
+		arguments.get("hostname").setValue(config.getHost());
+		arguments.get("port").setValue(config.getPort()); // need to correspond to the JVM address
 
 		// Connect to the JVM
 		try {

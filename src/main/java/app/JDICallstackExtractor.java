@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jdi.VirtualMachine;
 
+import app.config.JDIExtractorConfig;
 import app.csExtractors.CallstackExtractor;
 import app.vmAttach.JDIAttach;
 
@@ -17,7 +18,7 @@ public class JDICallstackExtractor {
 	public static void main(String[] args) throws Exception {
 		// reading the config file
 		String configFileName;
-		JsonNode config = null;
+		JsonNode configNode = null;
 		if (args.length == 0) {
 			configFileName = "config.json";
 		} else {
@@ -25,15 +26,17 @@ public class JDICallstackExtractor {
 		}
 		try {
 			ObjectMapper mapper = new ObjectMapper();
-			config = mapper.readTree(new File(configFileName));
+			configNode = mapper.readTree(new File(configFileName));
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		JDIExtractorConfig config = JDIExtractorConfig.fromJson(configNode);
 
 		// creating the VmManager using JDIAttach to find the vmx
 		JDIAttach jdiAttach = new JDIAttach();
-		VirtualMachine vm = jdiAttach.attachToJDI(config.get("vm"));
+		VirtualMachine vm = jdiAttach.attachToJDI(config.getVm());
 
 		CallstackExtractor.extract(vm, config);
 	}
