@@ -19,10 +19,6 @@ public class VmManager {
 		this.vm = vm;
 	}
 
-	public void resumeThread(String threadName) {
-		this.getThreadNamed(threadName).resume();
-	}
-
 	/**
 	 * Returns the thread with the chosen name if one exist in the given VM
 	 * 

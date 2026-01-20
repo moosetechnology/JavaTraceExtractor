@@ -74,7 +74,7 @@ public class StackExtractor {
 	public static Map<String, BiFunction<String, String, ILoggerFormat>> registerAllLoggers() {
 		Map<String, BiFunction<String, String, ILoggerFormat>> res = new HashMap<>();
 		// json format
-		res.put("json", LoggerJson::new);
+		res.put("json", LoggerJson::new); 
 		return res;
 	}
 

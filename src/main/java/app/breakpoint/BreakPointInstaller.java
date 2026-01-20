@@ -59,19 +59,7 @@ public class BreakPointInstaller {
 	private static Method findMethod(VirtualMachine vm, BreakpointConfig breakpointConfig) {
 		// finding the class
 		List<ReferenceType> classes = vm.classesByName(breakpointConfig.getClassName());
-		if (classes.isEmpty()) {
-			throw new IllegalArgumentException("Class not found : " + breakpointConfig.getClassName());
-		}
-		ClassType classType = (ClassType) classes.get(0);
-
-		// getting all the methods with the searched name in the class
-		List<Method> allMethods = classType.methodsByName(breakpointConfig.getMethodName());
-
-		// if no method found throw an exception
-		if (allMethods.isEmpty()) {
-			throw new IllegalArgumentException("No method named " + breakpointConfig.getMethodName() + " in class "
-					+ breakpointConfig.getClassName());
-		}
+		List<Method> allMethods = getMethods(breakpointConfig, classes);
 
 		// if we have multiple methods and given arguments types, we search if one
 		// correspond
@@ -98,6 +86,23 @@ public class BreakPointInstaller {
 		// if we got here, then no method have been found
 		throw new IllegalArgumentException("No method named " + breakpointConfig.getMethodName() + " in class "
 				+ breakpointConfig.getClassName() + " with argument types: " + breakpointConfig.getMethodArguments());
+	}
+
+	private static List<Method> getMethods(BreakpointConfig breakpointConfig, List<ReferenceType> classes) {
+		if (classes.isEmpty()) {
+			throw new IllegalArgumentException("Class not found : " + breakpointConfig.getClassName());
+		}
+		ClassType classType = (ClassType) classes.get(0);
+
+		// getting all the methods with the searched name in the class
+		List<Method> allMethods = classType.methodsByName(breakpointConfig.getMethodName());
+
+		// if no method found throw an exception
+		if (allMethods.isEmpty()) {
+			throw new IllegalArgumentException("No method named " + breakpointConfig.getMethodName() + " in class "
+					+ breakpointConfig.getClassName());
+		}
+		return allMethods;
 	}
 
 }

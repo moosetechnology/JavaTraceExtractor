@@ -33,16 +33,12 @@ public class CallstackExtractor {
 		VmManager vmManager = new VmManager(vm);
 
 		// TODO This can help load classes that are not in jdk
-		// ClassPrepareRequest classPrepareRequest =
-		// vm.eventRequestManager().createClassPrepareRequest();
-		// classPrepareRequest.addClassFilter(config.get("breakpoint").get("className").textValue());
-		// classPrepareRequest.enable();
+		ClassPrepareRequest classPrepareRequest = vm.eventRequestManager().createClassPrepareRequest();
+		classPrepareRequest.addClassFilter(config.getBreakpoint().getClassName());
+		classPrepareRequest.enable();
 
 		// Adding the breakpoint
 		BreakpointWrapper bkWrap = BreakPointInstaller.addBreakpoint(vm, config.getBreakpoint());
-
-		// resuming the process of the thread
-		vmManager.resumeThread(config.getEntryMethod());// TODO maybe it can be deleted
 
 		vmManager.waitForBreakpoint(bkWrap);
 

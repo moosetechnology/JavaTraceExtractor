@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class ObjectRefSimulation {
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		List<String> l = new ArrayList<>();
 		addAnElement(l);
 	}
