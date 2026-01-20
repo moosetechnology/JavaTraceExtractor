@@ -31,15 +31,14 @@ public class JDICallstackExtractor {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		JDIExtractorConfig config = JDIExtractorConfig.fromJson(configNode);
 
-		// creating the VmManager using JDIAttach to find the vmx
-		JDIAttach jdiAttach = new JDIAttach();
-		VirtualMachine vm = jdiAttach.attachToJDI(config.getVm());
+		// creating the VmManager using JDIAttach to find the vm
+		VirtualMachine vm = (new JDIAttach()).attachToJDI(config.getVm());
 
 		CallstackExtractor.extract(vm, config);
-		
+
 		// Properly disconnecting
 		vm.dispose();
 	}
