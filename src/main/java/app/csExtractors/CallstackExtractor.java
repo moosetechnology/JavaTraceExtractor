@@ -1,51 +1,61 @@
 package app.csExtractors;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.request.ClassPrepareRequest;
 
 import app.breakpoint.BreakPointInstaller;
 import app.breakpoint.BreakpointWrapper;
+import app.config.JDIExtractorConfig;
+import app.config.LoggingConfig;
 import app.vmManager.VmManager;
 
 public class CallstackExtractor {
 
 	StackExtractor extractor;
-	JsonNode config;
+	JDIExtractorConfig config;
 
-	public CallstackExtractor(JsonNode loggingConfig, int maxDepth) {
+	public CallstackExtractor(LoggingConfig loggingConfig, int maxDepth) {
 		this.extractor = new StackExtractor(loggingConfig, maxDepth);
 	}
-	
-	public CallstackExtractor(JsonNode config) {
-		this.extractor = new StackExtractor(config.get("logging"), config.get("maxDepth").intValue());
+
+	public CallstackExtractor(JDIExtractorConfig config) {
+		this.extractor = new StackExtractor(config.getLogging(), config.getMaxDepth());
 		this.config = config;
 	}
-	
-	public static void extract(VirtualMachine vm, JsonNode config) throws InterruptedException {
+
+	public static void extract(VirtualMachine vm, JDIExtractorConfig config) throws InterruptedException {
 		VmManager vmManager = new VmManager(vm);
-		// Adding the breakpoint
-		BreakpointWrapper bkWrap = BreakPointInstaller.addBreakpoint(vm, config.get("breakpoint"));
 
-		// resuming the process of the thread
-		vmManager.resumeThread(config.get("entryMethod").textValue());
-		
-		vmManager.waitForBreakpoint(bkWrap);
-		
-		CallstackExtractor csExtractor = new CallstackExtractor(config.get("logging"), config.get("maxDepth").intValue());
-		csExtractor.extractCallStack(vmManager.getThreadNamed(config.get("entryMethod").textValue()));
+		vmManager.waitForBreakpoint(vm, config.getBreakpoint());
 
+		CallstackExtractor csExtractor = new CallstackExtractor(config.getLogging(), config.getMaxDepth());
+		csExtractor.extractCallStack(vmManager.getThreadNamed(config.getEntryMethod()));
+
+		//TODO delete this, this is testing code
+		List<ReferenceType> classes2 = vm.allClasses();
+		List<String> classesNames = new ArrayList<>();
+		for (ReferenceType ref : classes2) {
+			if (ref.name().startsWith("org.apache")) {
+				classesNames.add(ref.name());
+			}
+		}
+		
+		
 		// properly disconnecting
 		vmManager.disposeVM();
 	}
 
 	/**
-	 * Extract the call stack on the searched VM starting form the given thread and stopping at the method described
+	 * Extract the call stack on the searched VM starting form the given thread and
+	 * stopping at the method described
 	 * 
 	 * @param thread the thread to study
 	 */
@@ -53,12 +63,14 @@ public class CallstackExtractor {
 
 		try {
 			extractor.getLogger().framesStart();
-			// iterating from the end of the list to start the logging from the first method called
+			// iterating from the end of the list to start the logging from the first method
+			// called
 			List<StackFrame> frames = thread.frames();
 			ListIterator<StackFrame> it = frames.listIterator(frames.size());
 
 			// doing the first iteration separately because the logging potentially need
-			// to know if we are at the first element or not to join with a special character
+			// to know if we are at the first element or not to join with a special
+			// character
 			extractor.getLogger().frameLineStart(1);
 
 			// extracting the stack frame
