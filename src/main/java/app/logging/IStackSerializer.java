@@ -5,7 +5,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.StringReference;
 
-public interface IStackLogger {
+public interface IStackSerializer {
 
 	String framesStart();
 

@@ -3,8 +3,6 @@ package app.extractor;
 import java.io.IOException;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Stack;
-
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
@@ -28,20 +26,19 @@ import app.config.JDIExtractorConfig;
 
 public class CallstackExtractor extends JDIExtractor {
 
-	private final StackFrameSerializer stackFrameSerializer;
+	private final StackFrameLogger stackFrameLogger;
 
 	public CallstackExtractor(VirtualMachine vm, JDIExtractorConfig config) {
 		super(vm, config);
-		this.stackFrameSerializer = new StackFrameSerializer(config.getLogging(), config.getMaxDepth());
+		this.stackFrameLogger = new StackFrameLogger(config.getLogging(), config.getMaxDepth());
 	}
 
 	@Override
 	protected void executeExtraction() {
 		try {
-			// TODO this method does not work, it gives way too many frames (pay attention
-			// this make the program way slower, except at least 5 minutes wait)
-			// List<StackFrame> frames = this.collectFrames();
-			// this.processFrames(frames);
+			// TODO this method does not work, it kills the VM probably due to an overload of events
+			//this.collectFrames();
+			//stackFrameLogger.writeAll();
 
 			this.waitForBreakpoint();
 			this.processFrames(this.getThread());
@@ -57,7 +54,8 @@ public class CallstackExtractor extends JDIExtractor {
 	/**
 	 * Iterates over the stack frames and delegates extraction to the
 	 * StackExtractor.
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	private void processFrames(ThreadReference thread) throws IncompatibleThreadStateException, IOException {
 		processFrames(thread.frames());
@@ -124,7 +122,8 @@ public class CallstackExtractor extends JDIExtractor {
 	/**
 	 * Iterates over the stack frames and delegates extraction to the
 	 * StackExtractor.
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	private void processFrames(List<StackFrame> frames) throws IncompatibleThreadStateException, IOException {
 
@@ -132,10 +131,10 @@ public class CallstackExtractor extends JDIExtractor {
 		// called
 		ListIterator<StackFrame> it = frames.listIterator(frames.size());
 		while (it.hasPrevious()) {
-			stackFrameSerializer.push(it.previous());
+			stackFrameLogger.push(it.previous());
 		}
-		
-		stackFrameSerializer.writeAll();
+
+		stackFrameLogger.writeAll();
 
 	}
 
@@ -145,8 +144,7 @@ public class CallstackExtractor extends JDIExtractor {
 	 * 
 	 * @throws IncompatibleThreadStateException
 	 */
-	private List<StackFrame> collectFrames() throws IncompatibleThreadStateException {
-		Stack<StackFrame> frames = new Stack<>();
+	private void collectFrames() throws IncompatibleThreadStateException {
 		ThreadReference targetThread = this.getThread();
 
 		// Request method entries
@@ -196,12 +194,12 @@ public class CallstackExtractor extends JDIExtractor {
 						}
 					} else if (event instanceof MethodEntryEvent) {
 						// If counts does not matches it means it is noise from the VM
-						if (frames.size() + 1 == targetThread.frameCount()) {
-							frames.push(targetThread.frame(0));
+						if (stackFrameLogger.size() + 1 == targetThread.frameCount()) {
+							stackFrameLogger.push(targetThread.frame(0));
 						}
 
 					} else if (event instanceof MethodExitEvent) {
-						frames.pop();
+						stackFrameLogger.pop();
 					}
 				}
 
@@ -218,7 +216,6 @@ public class CallstackExtractor extends JDIExtractor {
 			throw new IllegalStateException(
 					"Cannot continue extraction due to an interruption of the vm connexion : " + e.getMessage());
 		}
-		return frames;
 	}
 
 }

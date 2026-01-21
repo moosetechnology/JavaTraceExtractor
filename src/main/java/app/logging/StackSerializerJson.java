@@ -9,9 +9,9 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.StringReference;
 
-public class StackLoggerJson implements IStackLogger {
+public class StackSerializerJson implements IStackSerializer {
 
-	public StackLoggerJson(String outputName, String Extension) {
+	public StackSerializerJson() {
 
 	}
 
