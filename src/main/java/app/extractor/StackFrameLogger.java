@@ -1,14 +1,16 @@
 package app.extractor;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
-
+import java.util.Stack;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ClassObjectReference;
 import com.sun.jdi.Field;
@@ -21,22 +23,32 @@ import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 
 import app.config.LoggingConfig;
-import app.logging.ILoggerFormat;
-import app.logging.LoggerJson;
+import app.logging.IStackSerializer;
+import app.logging.StackSerializerJson;
 
 import com.sun.jdi.ReferenceType;
 
 /**
  * This class extract all the information of a given stack frame to a text file
  */
-public class StackFrameSerializer {
+public class StackFrameLogger {
 
-	public static Map<String, BiFunction<String, String, ILoggerFormat>> loggerChoice = registerAllLoggers();
+	public static Map<String, Class<? extends IStackSerializer>> serializerChoice = registerAllSerializer();
+
+	/**
+	 * Save all serialized frame before logging
+	 */
+	private Stack<String> serializedFrames;
 
 	/**
 	 * The logger used to collect extracted information
 	 */
-	private ILoggerFormat logger;
+	private IStackSerializer serializer;
+
+	/**
+	 * The logging configuration used
+	 */
+	private LoggingConfig loggingConfig;
 
 	/**
 	 * represent the maximum recursion algorithm to study object's fields and
@@ -54,27 +66,31 @@ public class StackFrameSerializer {
 	 * 
 	 * @param loggingConfig information to instantiate the logger
 	 */
-	public StackFrameSerializer(LoggingConfig loggingConfig, int depth) {
+	public StackFrameLogger(LoggingConfig loggingConfig, int depth) {
+		this.serializedFrames = new Stack<>();
+		this.loggingConfig = loggingConfig;
+		this.maxDepth = depth;
+		
+		try {
+			// Finding the class corresponding to the format configuration
+            Class<? extends IStackSerializer> serializerClass = serializerChoice.get(loggingConfig.getFormat());
 
-		// logger creation
-		String format = loggingConfig.getFormat();
-		String outputName = loggingConfig.getOutputName();
-		String extension = loggingConfig.getExtension();
-
-		if (!loggerChoice.containsKey(format)) {
-			throw new IllegalArgumentException("Logger format not recognized: " + format);
-		}
-
-		logger = loggerChoice.get(format).apply(outputName, extension);
-
-		// max depth setting
-		maxDepth = depth;
+            // Finding the constructor 
+            Constructor<? extends IStackSerializer> constructor = 
+                serializerClass.getConstructor();
+            
+            // Creation of the instance
+            this.serializer = constructor.newInstance();
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to instantiate the serializer for the format : " + loggingConfig.getFormat(), e);
+        }
 	}
 
-	public static Map<String, BiFunction<String, String, ILoggerFormat>> registerAllLoggers() {
-		Map<String, BiFunction<String, String, ILoggerFormat>> res = new HashMap<>();
+	public static Map<String, Class<? extends  IStackSerializer>> registerAllSerializer() {
+		Map<String, Class<? extends IStackSerializer>> res = new HashMap<>();
 		// json format
-		res.put("json", LoggerJson::new); 
+		res.put("json", StackSerializerJson.class);
 		return res;
 	}
 
@@ -83,19 +99,8 @@ public class StackFrameSerializer {
 	 * 
 	 * @return the used logger
 	 */
-	public ILoggerFormat getLogger() {
-		return logger;
-	}
-
-	/**
-	 * Properly close the logger
-	 */
-	public void closeLogger() {
-		try {
-			logger.closeWriter();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public IStackSerializer getLogger() {
+		return serializer;
 	}
 
 	/**
@@ -104,12 +109,17 @@ public class StackFrameSerializer {
 	 * 
 	 * @param frame the frame to extract
 	 */
-	public void extract(StackFrame frame) {
-		extractMethod(frame);
-		logger.joinElementListing();
-		extractArguments(frame);
-		logger.joinElementListing();
-		extractReceiver(frame);
+	public String extract(StackFrame frame) {
+		String res = "";
+		res += this.serializer.frameLineStart(serializedFrames.size());
+		res += extractMethod(frame);
+		res += serializer.joinElementListing();
+		res += extractArguments(frame);
+		res += serializer.joinElementListing();
+		res += extractReceiver(frame);
+		res += this.serializer.frameLineEnd();
+
+		return res;
 	}
 
 	/**
@@ -117,9 +127,9 @@ public class StackFrameSerializer {
 	 * 
 	 * @param frame the frame to extract
 	 */
-	public void extractMethod(StackFrame frame) {
+	public String extractMethod(StackFrame frame) {
 		Method method = frame.location().method();
-		logger.methodSignature(method);
+		return serializer.methodSignature(method);
 	}
 
 	/**
@@ -127,10 +137,10 @@ public class StackFrameSerializer {
 	 * 
 	 * @param frame the frame to extract
 	 */
-	public void extractArguments(StackFrame frame) {
+	public String extractArguments(StackFrame frame) {
 		boolean exception = false;
-
-		logger.methodArgumentsStart();
+		String res = "";
+		res += serializer.methodArgumentsStart();
 
 		// arguments can sometimes not be accessible, if that's the case, stop here
 		Iterator<Value> argumentsValueIterator = null;
@@ -138,37 +148,38 @@ public class StackFrameSerializer {
 			argumentsValueIterator = frame.getArgumentValues().iterator();
 		} catch (InternalException e) {
 			// Happens for native calls, and can't be obtained
-			logger.inaccessibleArgument();
+			res += serializer.inaccessibleArgument();
 			exception = true;
 		}
 		if (!exception) {
-			logger.methodArgumentsValuesStart();
+			res += serializer.methodArgumentsValuesStart();
 			// doing the first iteration separately because the logging potentially need
 			// to know if we are at the first element or not to join with a special
 			// character
 			if (argumentsValueIterator.hasNext()) {
-				extractAnArgument(argumentsValueIterator);
+				res += extractAnArgument(argumentsValueIterator);
 			}
 
 			while (argumentsValueIterator.hasNext()) {
-				logger.joinElementListing();
-				extractAnArgument(argumentsValueIterator);
+				res += serializer.joinElementListing();
+				res += extractAnArgument(argumentsValueIterator);
 			}
-			logger.methodArgumentsValuesEnd();
+			res += serializer.methodArgumentsValuesEnd();
 		}
-		logger.methodArgumentsEnd();
+		res += serializer.methodArgumentsEnd();
+		return res;
 	}
 
 	/**
 	 * 
 	 * @param argumentsValueIterator the iterator on the arguments
 	 */
-	private void extractAnArgument(Iterator<Value> argumentsValueIterator) {
+	private String extractAnArgument(Iterator<Value> argumentsValueIterator) {
 		// Here we suppose that method.argumentTypeNames() and frame.getArgumentValues()
 		// have the same numbers of items
 		// With this supposition being always true, we can just check if one have next
 		// and iterate in both
-		extractValueRecursive(argumentsValueIterator.next(), 0);
+		return extractValueRecursive(argumentsValueIterator.next(), 0);
 	}
 
 	/**
@@ -176,10 +187,13 @@ public class StackFrameSerializer {
 	 * 
 	 * @param frame the frame to extract
 	 */
-	public void extractReceiver(StackFrame frame) {
-		logger.methodReceiverStart();
-		extractValueRecursive(frame.thisObject(), 0);
-		logger.methodReceiverEnd();
+	public String extractReceiver(StackFrame frame) {
+		String res = "";
+		res += serializer.methodReceiverStart();
+		res += extractValueRecursive(frame.thisObject(), 0);
+		res += serializer.methodReceiverEnd();
+
+		return res;
 	}
 
 	/**
@@ -188,21 +202,22 @@ public class StackFrameSerializer {
 	 * 
 	 * @param value the value to extract
 	 */
-	private void extractValueRecursive(Value value, int depth) {
+	private String extractValueRecursive(Value value, int depth) {
+		String res = "";
 		if (maxDepth >= 0 & depth > maxDepth) {
-			logger.maxDepth();
+			res += serializer.maxDepth();
 		} else if (value == null) {
-			logger.nullValue();
+			res += serializer.nullValue();
 		} else if (value instanceof PrimitiveValue) {
-			extractPrimitiveValue((PrimitiveValue) value, depth);
+			res += extractPrimitiveValue((PrimitiveValue) value, depth);
 		} else if (value instanceof ObjectReference) {
-			extractObjectReference((ObjectReference) value, depth);
+			res += extractObjectReference((ObjectReference) value, depth);
 		} else {
 			// in case there would be another type
 			throw new IllegalStateException(
 					"Unknown Value Type: " + value.type().name() + ", parsing not yet implemented for this type");
 		}
-
+		return res;
 	}
 
 	/**
@@ -210,8 +225,8 @@ public class StackFrameSerializer {
 	 * 
 	 * @param value the primitiveValue to extract
 	 */
-	private void extractPrimitiveValue(PrimitiveValue value, int depth) {
-		logger.primitiveValue(value);
+	private String extractPrimitiveValue(PrimitiveValue value, int depth) {
+		return serializer.primitiveValue(value);
 	}
 
 	/**
@@ -219,50 +234,53 @@ public class StackFrameSerializer {
 	 * 
 	 * @param value the ObjectReference to extract
 	 */
-	private void extractObjectReference(ObjectReference value, int depth) {
+	private String extractObjectReference(ObjectReference value, int depth) {
+		String res = "";
 
-		logger.objectReferenceStart();
+		res += serializer.objectReferenceStart();
 		if (visited.contains(value)) {
-			logger.objectReferenceAlreadyFound(value);
+			res += serializer.objectReferenceAlreadyFound(value);
 		} else {
 			visited.add(value);
-			logger.objectReferenceInfoStart(value);
+			res += serializer.objectReferenceInfoStart(value);
 			if (value instanceof StringReference) {
-				logger.stringReference((StringReference) value);
+				res += serializer.stringReference((StringReference) value);
 			} else if (value instanceof ArrayReference) {
 
-				logger.arrayReferenceStart();
+				res += serializer.arrayReferenceStart();
 				// Parsing every value of the array
 				List<Value> arrayValues = ((ArrayReference) value).getValues();
 				if (arrayValues.isEmpty()) {
-					logger.emptyArray();
+					res += serializer.emptyArray();
 				} else if (maxDepth >= 0 & depth + 1 > maxDepth) {
 					// in case the max depth will be attained stop here to not make an array full of
 					// maxDepth messages
-					logger.maxDepth();
+					res += serializer.maxDepth();
 				} else {
 					// doing the first iteration separately because the logging potentially need
 					// to know if we are at the first element or not to join with a special
 					// character
-					extractArrayValue(depth, arrayValues, 0);
+					res += extractArrayValue(depth, arrayValues, 0);
 
 					for (int i = 1; i < arrayValues.size(); i++) {
-						logger.joinElementListing();
-						extractArrayValue(depth, arrayValues, i);
+						res += serializer.joinElementListing();
+						res += extractArrayValue(depth, arrayValues, i);
 					}
 
 				}
-				logger.arrayReferenceEnd();
+				res += serializer.arrayReferenceEnd();
 			} else if (value instanceof ClassObjectReference) {
 				// using reflectedType because it is said to be more precise than referenceType
-				extractAllFields(value, ((ClassObjectReference) value).reflectedType(), depth);
+				res += extractAllFields(value, ((ClassObjectReference) value).reflectedType(), depth);
 
 			} else {
-				extractAllFields(value, value.referenceType(), depth);
+				res += extractAllFields(value, value.referenceType(), depth);
 			}
-			logger.objectReferenceInfoEnd();
+			res += serializer.objectReferenceInfoEnd();
 		}
-		logger.objectReferenceEnd();
+		res += serializer.objectReferenceEnd();
+
+		return res;
 	}
 
 	/**
@@ -272,10 +290,12 @@ public class StackFrameSerializer {
 	 * @param arrayValues the values of the array
 	 * @param index       the index of the value to extract
 	 */
-	private void extractArrayValue(int depth, List<Value> arrayValues, int index) {
-		logger.arrayValueStart(index);
-		extractValueRecursive(arrayValues.get(index), depth + 1);
-		logger.arrayValueEnd();
+	private String extractArrayValue(int depth, List<Value> arrayValues, int index) {
+		String res = "";
+		res += serializer.arrayValueStart(index);
+		res += extractValueRecursive(arrayValues.get(index), depth + 1);
+		res += serializer.arrayValueEnd();
+		return res;
 	}
 
 	/**
@@ -284,7 +304,8 @@ public class StackFrameSerializer {
 	 * @param ref  the ObjectReference having the fields to extract
 	 * @param type the reference type of the ObjectReference
 	 */
-	private void extractAllFields(ObjectReference ref, ReferenceType type, int depth) {
+	private String extractAllFields(ObjectReference ref, ReferenceType type, int depth) {
+		String res = "";
 		// Check if the class is prepared, if not trying to get any field will throw an
 		// exception
 		// If the class didn't load it mean it's not useful in the context of this call
@@ -294,25 +315,25 @@ public class StackFrameSerializer {
 			// Preparation involves creating the static fields for a class or interface and
 			// initializing such fields to their default values
 
-			logger.classNotPrepared();
+			res += serializer.classNotPrepared();
 		} else {
-			logger.fieldsStart();
+			res += serializer.fieldsStart();
 			Iterator<Field> iterator = type.allFields().iterator();
 			// doing the first iteration separately because the logging potentially need
 			// to know if we are at the first element or not to join with a special
 			// character
 			if (iterator.hasNext()) {
-				extractField(ref, depth, iterator.next());
+				res += extractField(ref, depth, iterator.next());
 			}
 
 			while (iterator.hasNext()) {
-				logger.joinElementListing();
-				extractField(ref, depth, iterator.next());
+				res += serializer.joinElementListing();
+				res += extractField(ref, depth, iterator.next());
 
 			}
-			logger.fieldsEnd();
+			res += serializer.fieldsEnd();
 		}
-
+		return res;
 	}
 
 	/**
@@ -322,10 +343,12 @@ public class StackFrameSerializer {
 	 * @param depth the depth of the current recursion
 	 * @param field the field to extract
 	 */
-	private void extractField(ObjectReference ref, int depth, Field field) {
+	private String extractField(ObjectReference ref, int depth, Field field) {
+		String res = "";
 		boolean exception = false;
-		logger.fieldStart(field.name());
 		Value fieldValue = null;
+
+		res += serializer.fieldStart(field.name());
 		try {
 			// TODO
 			// We actually extract the static and final fields, should we?
@@ -333,19 +356,52 @@ public class StackFrameSerializer {
 			fieldValue = ref.getValue(field);
 
 		} catch (IllegalArgumentException e) {
-			logger.inaccessibleField();
+			res += serializer.inaccessibleField();
 			exception = true;
 		}
 		if (!exception) {
 
-			logger.fieldValueStart();
+			res += serializer.fieldValueStart();
 
-			extractValueRecursive(fieldValue, depth + 1);
+			res += extractValueRecursive(fieldValue, depth + 1);
 
-			logger.fieldValueEnd();
+			res += serializer.fieldValueEnd();
 		}
-		logger.fieldEnd();
+		res += serializer.fieldEnd();
+		return res;
+	}
 
+	public void push(StackFrame frame) {
+		this.serializedFrames.push(this.extract(frame));
+	}
+
+	public void pop() {
+		this.serializedFrames.pop();
+	}
+
+	public int size() {
+		return serializedFrames.size();
+	}
+
+	public void writeAll() throws IOException {
+		int index = 0;
+		ListIterator<String> it = serializedFrames.listIterator();
+		FileWriter output = new FileWriter(
+				this.loggingConfig.getOutputName() + "." + this.loggingConfig.getExtension());
+
+		output.write(serializer.framesStart());
+
+		while (it.hasNext()) {
+			if (index > 0) {
+				output.write(serializer.joinElementListing());
+			}
+			output.write(it.next());
+			index += 1;
+		}
+
+		output.write(serializer.framesEnd());
+
+		output.close();
 	}
 
 }

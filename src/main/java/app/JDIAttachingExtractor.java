@@ -18,7 +18,6 @@ public class JDIAttachingExtractor {
 
 	public static void main(String[] args) throws Exception {
 		long startTime = System.nanoTime();
-		System.out.println("startTime : " + startTime + " nanoseconds");
 		// reading the config file
 		String configFileName;
 		JsonNode configNode = null;
