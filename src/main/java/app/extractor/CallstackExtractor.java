@@ -37,7 +37,7 @@ public class CallstackExtractor extends JDIExtractor {
 			// TODO this method does not work, it gives way too many frames (pay attention this make the program way slower, except at least 5 minutes wait)
 			//List<StackFrame> frames = this.collectFrames();
 
-			this.waitForBreakpoint();
+			this.waitForBreakpoint(); 
 
 			this.processFrames(this.getThread());
 

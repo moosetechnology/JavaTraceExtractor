@@ -14,7 +14,7 @@ import app.vmAttach.JDIAttach;
 /**
  * Attach to a java virtual machine to extract the call stack to a text file
  */
-public class JDICallstackExtractor {
+public class JDIAttachingExtractor {
 
 	public static void main(String[] args) throws Exception {
 		long startTime = System.nanoTime();

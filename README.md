@@ -9,13 +9,12 @@ For More information about this meta-model see the [FamixCallStack](https://gith
 
 This tool requires Java version 9 to 21.  
 Newer versions might work, but have not been tested.  
-It is highly recommended to use the **same Java version** for both the program you want to analyze and the extractor (for example, if your application is executed in Java 9, the extractor should be cexecuted on Java 9).  
+It is highly recommended to use the **same Java version** for both the program you want to analyze and the extractor.  
 Using different versions may lead to unexpected behavior.  
 
 ### Step 0: Make at least a maven build to imports necessary libraries
 
-### Step 1: Run the Target Program in Debug Mode 
-Launch the program you want to analyze with the following VM argument:
+### Step 1: Launch the program you want to analyze with the following VM argument:
 ```
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006 
 ``` 
@@ -36,5 +35,5 @@ Edit the config.json file to fit the structure of your project.
 Refer to  [config.md](utils/tutorials/config.md) for detailed instructions.
 
 ### Step 3: Run the Extractor
-Execute the main method of JDICallstackExtractor.
+Execute the main of JDIAttachingExtractor.
 The output will be generated in the root directory of this repository.
