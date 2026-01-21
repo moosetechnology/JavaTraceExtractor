@@ -21,8 +21,8 @@ import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 
 import app.config.LoggingConfig;
-import app.logging.ILoggerFormat;
-import app.logging.LoggerJson;
+import app.logging.IStackLoggerFormat;
+import app.logging.StackLoggerJson;
 
 import com.sun.jdi.ReferenceType;
 
@@ -31,12 +31,12 @@ import com.sun.jdi.ReferenceType;
  */
 public class StackFrameSerializer {
 
-	public static Map<String, BiFunction<String, String, ILoggerFormat>> loggerChoice = registerAllLoggers();
+	public static Map<String, BiFunction<String, String, IStackLoggerFormat>> loggerChoice = registerAllLoggers();
 
 	/**
 	 * The logger used to collect extracted information
 	 */
-	private ILoggerFormat logger;
+	private IStackLoggerFormat logger;
 
 	/**
 	 * represent the maximum recursion algorithm to study object's fields and
@@ -71,10 +71,10 @@ public class StackFrameSerializer {
 		maxDepth = depth;
 	}
 
-	public static Map<String, BiFunction<String, String, ILoggerFormat>> registerAllLoggers() {
-		Map<String, BiFunction<String, String, ILoggerFormat>> res = new HashMap<>();
+	public static Map<String, BiFunction<String, String, IStackLoggerFormat>> registerAllLoggers() {
+		Map<String, BiFunction<String, String, IStackLoggerFormat>> res = new HashMap<>();
 		// json format
-		res.put("json", LoggerJson::new); 
+		res.put("json", StackLoggerJson::new); 
 		return res;
 	}
 
@@ -83,7 +83,7 @@ public class StackFrameSerializer {
 	 * 
 	 * @return the used logger
 	 */
-	public ILoggerFormat getLogger() {
+	public IStackLoggerFormat getLogger() {
 		return logger;
 	}
 

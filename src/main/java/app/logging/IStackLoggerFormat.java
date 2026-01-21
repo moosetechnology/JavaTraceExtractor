@@ -7,7 +7,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.StringReference;
 
-public interface ILoggerFormat {
+public interface IStackLoggerFormat {
 
 	void closeWriter() throws IOException;
 

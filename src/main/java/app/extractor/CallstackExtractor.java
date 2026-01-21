@@ -35,12 +35,12 @@ public class CallstackExtractor extends JDIExtractor {
 	}
 
 	@Override
-	protected void executeExtraction() {
+	protected void executeExtraction() { 
 		try {
 			// TODO this method does not work, it gives way too many frames (pay attention
 			// this make the program way slower, except at least 5 minutes wait)
-			//List<StackFrame> frames = this.collectFrames();
-			//this.processFrames(frames);
+			// List<StackFrame> frames = this.collectFrames();
+			// this.processFrames(frames);
 
 			this.waitForBreakpoint();
 			this.processFrames(this.getThread());
@@ -59,31 +59,7 @@ public class CallstackExtractor extends JDIExtractor {
 	 * StackExtractor.
 	 */
 	private void processFrames(ThreadReference thread) throws IncompatibleThreadStateException {
-		stackFrameSerializer.getLogger().framesStart();
-		// iterating from the end of the list to start the logging from the first method
-		// called
-		List<StackFrame> frames = thread.frames();
-		ListIterator<StackFrame> it = frames.listIterator(frames.size());
-
-		// doing the first iteration separately because the logging potentially need
-		// to know if we are at the first element or not to join with a special
-		// character
-		stackFrameSerializer.getLogger().frameLineStart(1);
-
-		// extracting the stack frame
-		stackFrameSerializer.extract(it.previous());
-		stackFrameSerializer.getLogger().frameLineEnd();
-
-		for (int i = 2; i <= frames.size(); i++) {
-			stackFrameSerializer.getLogger().joinElementListing();
-
-			stackFrameSerializer.getLogger().frameLineStart(i);
-			// extracting the stack frame
-			stackFrameSerializer.extract(it.previous());
-			stackFrameSerializer.getLogger().frameLineEnd();
-		}
-		stackFrameSerializer.getLogger().framesEnd();
-
+		processFrames(thread.frames());
 	}
 
 	/**
@@ -143,7 +119,7 @@ public class CallstackExtractor extends JDIExtractor {
 					"Cannot continue extraction due to an interruption of the vm connexion : " + e.getMessage());
 		}
 	}
-	
+
 	/**
 	 * Iterates over the stack frames and delegates extraction to the
 	 * StackExtractor.
@@ -232,7 +208,7 @@ public class CallstackExtractor extends JDIExtractor {
 						}
 					} else if (event instanceof MethodEntryEvent) {
 						// If counts does not matches it means it is noise from the VM
-						if (frames.size() +1 == targetThread.frameCount()){
+						if (frames.size() + 1 == targetThread.frameCount()) {
 							frames.push(targetThread.frame(0));
 						}
 

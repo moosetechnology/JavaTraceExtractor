@@ -3,11 +3,11 @@ package app.logging;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public abstract class AbstractLoggerFormat implements ILoggerFormat  {
+public abstract class AbstractStackLoggerFormat implements IStackLoggerFormat  {
 	
 	protected FileWriter output;
 
-	public AbstractLoggerFormat(String outputName, String fileFormat) {
+	public AbstractStackLoggerFormat(String outputName, String fileFormat) {
 
 		try {
 			output = new FileWriter(outputName + "." + fileFormat);

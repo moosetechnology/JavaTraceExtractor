@@ -9,9 +9,9 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.StringReference;
 
-public class LoggerJson extends AbstractLoggerFormat {
+public class StackLoggerJson extends AbstractStackLoggerFormat {
 
-	public LoggerJson(String outputName, String Extension) {
+	public StackLoggerJson(String outputName, String Extension) {
 		super(outputName, Extension);
 	}
 
