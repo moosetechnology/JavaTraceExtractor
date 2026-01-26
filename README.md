@@ -35,5 +35,7 @@ Edit the config.json file to fit the structure of your project.
 Refer to  [config.md](utils/tutorials/config.md) for detailed instructions.
 
 ### Step 3: Run the Extractor
-Execute the main of JDIAttachingExtractor.
+Execute the main of either :
+- JDIAttachingFastExtractor : Fast, but object states are captured at the very end.
+- JDIAttachingSlowExtractor : Slow, but historically accurate.
 The output will be generated in the root directory of this repository.

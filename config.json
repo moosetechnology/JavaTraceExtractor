@@ -3,7 +3,15 @@
 		"host": "localhost",
 		"port": "5006"
 	},
-	"breakpoint": {
+	"entrypoint": {
+		"className": "app.experiments.ObjectRefSimulation",
+		"methodName": "main",
+		"methodArguments": [
+			"java.lang.String[]"
+		],
+		"repBefore": 0
+	},
+	"endpoint": {
 		"className": "java.lang.Runtime",
 		"methodName": "exec",
 		"methodArguments": [
@@ -11,7 +19,6 @@
 		],
 		"repBefore": 0
 	},
-	"entryMethod": "main",
 	"maxDepth" : 20,
 	"logging": {
 		"format"  : "json",

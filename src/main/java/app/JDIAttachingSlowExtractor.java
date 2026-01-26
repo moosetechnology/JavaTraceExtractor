@@ -7,14 +7,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jdi.VirtualMachine;
 
 import app.config.JDIExtractorConfig;
-import app.extractor.CallstackExtractor;
+import app.extractor.CallstackSlowExtractor;
 import app.extractor.JDIExtractor;
 import app.vmAttach.JDIAttach;
 
 /**
  * Attach to a java virtual machine to extract the call stack to a text file
+ * 
+ * Extracts the call stack only once, when the breakpoint is reached.
+ * * <p><b>Note:</b> Fast, but object states are captured at the very end. 
+ * If an object was modified during execution, older frames will show the 
+ * <i>current</i> modified value, not the value at the time of the call.
  */
-public class JDIAttachingExtractor {
+public class JDIAttachingSlowExtractor {
 
 	public static void main(String[] args) throws Exception {
 		long startTime = System.nanoTime();
@@ -39,7 +44,7 @@ public class JDIAttachingExtractor {
 		// creating the VmManager using JDIAttach to find the vm
 		VirtualMachine vm = (new JDIAttach()).attachToJDI(config.getVm());
 
-		JDIExtractor.launch(CallstackExtractor.class, vm, config);
+		JDIExtractor.launch(CallstackSlowExtractor.class, vm, config);
 
 		// Properly disconnecting
 		vm.dispose();
