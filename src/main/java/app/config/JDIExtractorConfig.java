@@ -7,9 +7,9 @@ public class JDIExtractorConfig {
 	private static final int DEFAULT_MAX_DEPTH = 20;
 
 	private VmConfig vm;
-	private BreakpointConfig breakpoint;
+	private BreakpointConfig endpoint;
 	private LoggingConfig logging;
-	private String entryMethod;
+	private BreakpointConfig entrypoint;
 	private int maxDepth;
 
 	// --- Private Constructor (use the static factory method) ---
@@ -30,17 +30,11 @@ public class JDIExtractorConfig {
 
 		JDIExtractorConfig config = new JDIExtractorConfig();
 
-		// Simple Field Extraction
-		if (rootNode.has("entryMethod")) {
-			config.entryMethod = rootNode.get("entryMethod").textValue();
-		} else {
-			throw new IllegalArgumentException("Missing required field: 'entryMethod'");
-		}
-
 		config.maxDepth = rootNode.has("maxDepth") ? rootNode.get("maxDepth").asInt() : DEFAULT_MAX_DEPTH;
 
 		config.vm = VmConfig.fromJson(rootNode.get("vm"));
-		config.breakpoint = BreakpointConfig.fromJson(rootNode.get("breakpoint"));
+		config.endpoint = BreakpointConfig.fromJson(rootNode.get("endpoint"));
+		config.entrypoint = BreakpointConfig.fromJson(rootNode.get("entrypoint"));
 		config.logging = LoggingConfig.fromJson(rootNode.get("logging"));
 
 		return config;
@@ -50,16 +44,16 @@ public class JDIExtractorConfig {
 		return vm;
 	}
 
-	public BreakpointConfig getBreakpoint() {
-		return breakpoint;
+	public BreakpointConfig getEndpoint() {
+		return endpoint;
 	}
 
 	public LoggingConfig getLogging() {
 		return logging;
 	}
 
-	public String getEntryMethod() {
-		return entryMethod;
+	public BreakpointConfig getEntrypoint() {
+		return entrypoint;
 	}
 
 	public int getMaxDepth() {

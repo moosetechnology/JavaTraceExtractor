@@ -62,32 +62,43 @@ public class StackFrameLogger {
 	private Set<ObjectReference> visited = new HashSet<>();
 
 	/**
+	 * whether the frames are independents with each other, if they are, visited is
+	 * reseted between each frame serialisation
+	 */
+	private boolean frameIndependents;
+
+	/**
 	 * Constructor of StackFrameSerializer
 	 * 
-	 * @param loggingConfig information to instantiate the logger
+	 * @param loggingConfig     information to instantiate the logger
+	 * @param depth             the max depth of the object graphs
+	 * @param frameIndependents whether the frames are independents with each other,
+	 *                          if they are, visited is reseted between each frame
+	 *                          serialisation
 	 */
-	public StackFrameLogger(LoggingConfig loggingConfig, int depth) {
+	public StackFrameLogger(LoggingConfig loggingConfig, int depth, boolean frameIndependents) {
 		this.serializedFrames = new Stack<>();
 		this.loggingConfig = loggingConfig;
 		this.maxDepth = depth;
-		
+		this.frameIndependents = frameIndependents;
+
 		try {
 			// Finding the class corresponding to the format configuration
-            Class<? extends IStackSerializer> serializerClass = serializerChoice.get(loggingConfig.getFormat());
+			Class<? extends IStackSerializer> serializerClass = serializerChoice.get(loggingConfig.getFormat());
 
-            // Finding the constructor 
-            Constructor<? extends IStackSerializer> constructor = 
-                serializerClass.getConstructor();
-            
-            // Creation of the instance
-            this.serializer = constructor.newInstance();
-            
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to instantiate the serializer for the format : " + loggingConfig.getFormat(), e);
-        }
+			// Finding the constructor
+			Constructor<? extends IStackSerializer> constructor = serializerClass.getConstructor();
+
+			// Creation of the instance
+			this.serializer = constructor.newInstance();
+
+		} catch (Exception e) {
+			throw new RuntimeException(
+					"Unable to instantiate the serializer for the format : " + loggingConfig.getFormat(), e);
+		}
 	}
 
-	public static Map<String, Class<? extends  IStackSerializer>> registerAllSerializer() {
+	public static Map<String, Class<? extends IStackSerializer>> registerAllSerializer() {
 		Map<String, Class<? extends IStackSerializer>> res = new HashMap<>();
 		// json format
 		res.put("json", StackSerializerJson.class);
@@ -110,6 +121,9 @@ public class StackFrameLogger {
 	 * @param frame the frame to extract
 	 */
 	public String extract(StackFrame frame) {
+		if (this.frameIndependents) {
+			this.visited = new HashSet<>();
+		}
 		String res = "";
 		res += this.serializer.frameLineStart(serializedFrames.size());
 		res += extractMethod(frame);

@@ -102,7 +102,7 @@ public abstract class JDIExtractor {
 	 */
 	protected ThreadReference getThread() {
 		// WARNING: We assume the thread name matches 'entryMethod' (usually "main")
-		return this.getThreadNamed(config.getEntryMethod());
+		return this.getThreadNamed(config.getEntrypoint().getMethodName());
 	}
 
 	/**
