@@ -19,7 +19,7 @@ import app.vmAttach.JDIAttach;
  * If an object was modified during execution, older frames will show the 
  * <i>current</i> modified value, not the value at the time of the call.
  */
-public class JDIAttachingFastExtractor {
+public class JDIAttachingFastCallStackExtractor {
 
 	public static void main(String[] args) throws Exception {
 		long startTime = System.nanoTime();

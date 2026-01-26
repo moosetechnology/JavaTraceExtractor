@@ -70,9 +70,11 @@ public class StackFrameLogger {
 	/**
 	 * Constructor of StackFrameSerializer
 	 * 
-	 * @param loggingConfig information to instantiate the logger
-	 * @param depth         the max depth of the object graphs
-	 * @param
+	 * @param loggingConfig     information to instantiate the logger
+	 * @param depth             the max depth of the object graphs
+	 * @param frameIndependents whether the frames are independents with each other,
+	 *                          if they are, visited is reseted between each frame
+	 *                          serialisation
 	 */
 	public StackFrameLogger(LoggingConfig loggingConfig, int depth, boolean frameIndependents) {
 		this.serializedFrames = new Stack<>();

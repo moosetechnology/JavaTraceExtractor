@@ -36,8 +36,8 @@ Refer to  [config.md](utils/tutorials/config.md) for detailed instructions.
 
 ### Step 3: Run the Extractor
 Execute the main of either :
-- JDIAttachingFastExtractor : Fast, but object states are captured at the very end. 
+- JDIAttachingFastCallStackExtractor : Fast, but object states are captured at the very end. 
 	- Usefull for concepts
-- JDIAttachingSlowExtractor : Slow, but historically accurate.
+- JDIAttachingSlowCallStackExtractor : Slow, but historically accurate.
 	- Usefull for in depth analysis
 The output will be generated in the root directory of this repository.
