@@ -6,12 +6,10 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Configuration for the output format.
  */
 public class LoggingConfig {
-	private final String format;
 	private final String outputName;
 	private final String extension;
 
-	public LoggingConfig(String format, String outputName, String extension) {
-		this.format = format;
+	public LoggingConfig(String outputName, String extension) {
 		this.outputName = outputName;
 		this.extension = extension;
 	}
@@ -20,12 +18,8 @@ public class LoggingConfig {
 		if (node == null)
 			throw new IllegalArgumentException("Missing 'logging' section in configuration.");
 
-		return new LoggingConfig(node.path("format").textValue(), node.path("outputName").textValue(),
+		return new LoggingConfig( node.path("outputName").textValue(),
 				node.path("extension").textValue());
-	}
-
-	public String getFormat() {
-		return format;
 	}
 
 	public String getOutputName() {
