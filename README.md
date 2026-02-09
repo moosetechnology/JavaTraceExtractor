@@ -35,7 +35,7 @@ Edit the config.json file to fit the structure of your project.
 Refer to  [config.md](utils/tutorials/config.md) for detailed instructions.
 
 ### Step 3: Run the Extractor
-Execute the main of either :
+Run either :
 - SnapshotCSExtractorLauncher : Fast, but object states are captured at the very end. 
 	- Usefull for concepts
 - HistoryCSExtractorLauncher : Slow, but historically accurate.
