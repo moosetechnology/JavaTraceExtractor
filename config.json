@@ -4,7 +4,7 @@
 		"port": "5006"
 	},
 	"entrypoint": {
-		"className": "com.app.Victim",
+		"className": "com.example.Victim",
 		"methodName": "main",
 		"methodArguments": [
 			"java.lang.String[]"
@@ -21,9 +21,7 @@
 	},
 	"maxDepth" : 20,
 	"logging": {
-		"format"  : "json",
 		"outputName" : "JDIOutput",
 		"extension": "cs"
-		
 	}
 }

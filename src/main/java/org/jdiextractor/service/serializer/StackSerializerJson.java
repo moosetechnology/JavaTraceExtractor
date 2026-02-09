@@ -9,35 +9,30 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.StringReference;
 
-public class StackSerializerJson implements IStackSerializer {
+public class StackSerializerJson {
 
 	public StackSerializerJson() {
 
 	}
 
-	@Override
 	public String framesStart() {
 		return this.objectStart() + quotes("Lines") + ":" + this.arrayStart();
 
 	}
 
-	@Override
 	public String framesEnd() {
 		return this.arrayEnd() + this.objectEnd();
 	}
 
-	@Override
 	public String frameLineStart(int i) {
 		return this.objectStart();
 	}
 
-	@Override
 	public String frameLineEnd() {
 		return this.objectEnd();
 
 	}
 
-	@Override
 	public String methodSignature(Method method) {
 		String res = "";
 		// Retrieving the type of the parameters is important because it provides the
@@ -122,7 +117,6 @@ public class StackSerializerJson implements IStackSerializer {
 			return parser.parseTypeSig(var.genericSignature());
 	}
 
-	@Override
 	public String methodArgumentsStart() {
 		String res = "";
 
@@ -135,13 +129,11 @@ public class StackSerializerJson implements IStackSerializer {
 
 	}
 
-	@Override
 	public String methodArgumentsEnd() {
 		// close object
 		return this.objectEnd();
 	}
 
-	@Override
 	public String methodArgumentsValuesStart() {
 		String res;
 
@@ -152,17 +144,14 @@ public class StackSerializerJson implements IStackSerializer {
 
 	}
 
-	@Override
 	public String methodArgumentsValuesEnd() {
 		return this.arrayEnd();
 	}
 
-	@Override
 	public String inaccessibleArgument() {
 		return quotes("accessible") + ":" + "false";
 	}
 
-	@Override
 	public String fieldsStart() {
 		String res;
 		// open object for fields
@@ -175,7 +164,6 @@ public class StackSerializerJson implements IStackSerializer {
 		return res;
 	}
 
-	@Override
 	public String fieldsEnd() {
 		String res;
 
@@ -188,7 +176,6 @@ public class StackSerializerJson implements IStackSerializer {
 		return res;
 	}
 
-	@Override
 	public String fieldStart(String name) {
 		String res;
 		// open object for field
@@ -201,7 +188,6 @@ public class StackSerializerJson implements IStackSerializer {
 		return res;
 	}
 
-	@Override
 	public String fieldValueStart() {
 		String res = this.joinElementListing();
 
@@ -210,13 +196,11 @@ public class StackSerializerJson implements IStackSerializer {
 		return res;
 	}
 
-	@Override
 	public String fieldValueEnd() {
 		// Nothing needed to be logged
 		return "";
 	}
 
-	@Override
 	public String fieldEnd() {
 		String res;
 		// close object for field description field
@@ -227,7 +211,6 @@ public class StackSerializerJson implements IStackSerializer {
 		return res;
 	}
 
-	@Override
 	public String inaccessibleField() {
 		String res;
 		res = this.joinElementListing();
@@ -236,7 +219,6 @@ public class StackSerializerJson implements IStackSerializer {
 		return res;
 	}
 
-	@Override
 	public String methodReceiverStart() {
 		return quotes("receiver") + ":";
 		// open object
@@ -244,24 +226,20 @@ public class StackSerializerJson implements IStackSerializer {
 		// this.objectStart();
 	}
 
-	@Override
 	public String methodReceiverEnd() {
 		// close object
 		// this.objectEnd();
 		return "";
 	}
 
-	@Override
 	public String nullValue() {
 		return "null";
 	}
 
-	@Override
 	public String maxDepth() {
 		return quotes("<<MAX_DEPTH_REACHED>>");
 	}
 
-	@Override
 	public String primitiveValue(PrimitiveValue value) {
 
 		String res;
@@ -288,12 +266,10 @@ public class StackSerializerJson implements IStackSerializer {
 		return res;
 	}
 
-	@Override
 	public String stringReference(StringReference value) {
 		return quotes(value.value());
 	}
 
-	@Override
 	public String objectReferenceStart() {
 		String res;
 
@@ -339,33 +315,27 @@ public class StackSerializerJson implements IStackSerializer {
 		return res;
 	}
 
-	@Override
 	public String emptyArray() {
 		return "";
 	}
 
-	@Override
 	public String arrayValueStart(int number) {
 		return "";
 	}
 
-	@Override
 	public String arrayValueEnd() {
 		return "";
 	}
 
-	@Override
 	public String classNotPrepared() {
 		return quotes("<<CLASS_NOT_PREPARED>>");
 
 	}
 
-	@Override
 	public String joinElementListing() {
 		return ",";
 	}
 
-	@Override
 	public String arrayReferenceStart() {
 		String res;
 		res = this.objectStart();
@@ -376,7 +346,6 @@ public class StackSerializerJson implements IStackSerializer {
 
 	}
 
-	@Override
 	public String arrayReferenceEnd() {
 		String res;
 		res = this.arrayEnd();

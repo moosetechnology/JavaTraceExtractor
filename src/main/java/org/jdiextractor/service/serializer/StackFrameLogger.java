@@ -2,13 +2,10 @@ package org.jdiextractor.service.serializer;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -31,8 +28,6 @@ import com.sun.jdi.ReferenceType;
  */
 public class StackFrameLogger {
 
-	public static Map<String, Class<? extends IStackSerializer>> serializerChoice = registerAllSerializer();
-
 	/**
 	 * Save all serialized frame before logging
 	 */
@@ -41,7 +36,7 @@ public class StackFrameLogger {
 	/**
 	 * The logger used to collect extracted information
 	 */
-	private IStackSerializer serializer;
+	private StackSerializerJson serializer;
 
 	/**
 	 * The logging configuration used
@@ -80,27 +75,7 @@ public class StackFrameLogger {
 		this.maxDepth = depth;
 		this.frameIndependents = frameIndependents;
 
-		try {
-			// Finding the class corresponding to the format configuration
-			Class<? extends IStackSerializer> serializerClass = serializerChoice.get(loggingConfig.getFormat());
-
-			// Finding the constructor
-			Constructor<? extends IStackSerializer> constructor = serializerClass.getConstructor();
-
-			// Creation of the instance
-			this.serializer = constructor.newInstance();
-
-		} catch (Exception e) {
-			throw new RuntimeException(
-					"Unable to instantiate the serializer for the format : " + loggingConfig.getFormat(), e);
-		}
-	}
-
-	public static Map<String, Class<? extends IStackSerializer>> registerAllSerializer() {
-		Map<String, Class<? extends IStackSerializer>> res = new HashMap<>();
-		// json format
-		res.put("json", StackSerializerJson.class);
-		return res;
+		this.serializer = new StackSerializerJson();
 	}
 
 	/**
@@ -108,7 +83,7 @@ public class StackFrameLogger {
 	 * 
 	 * @return the used logger
 	 */
-	public IStackSerializer getLogger() {
+	public StackSerializerJson getLogger() {
 		return serializer;
 	}
 
