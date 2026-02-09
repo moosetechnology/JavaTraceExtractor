@@ -1,5 +1,7 @@
 package org.jdiextractor.tracemodel.entities;
 
+import org.jdiextractor.service.serializer.TraceSerializer;
+
 public class TraceAssignation extends TraceElement {
 
 	private TraceAssignationLeft left;
@@ -24,6 +26,11 @@ public class TraceAssignation extends TraceElement {
 
 	public void setRight(TraceAssignationRight right) {
 		this.right = right;
+	}
+
+	@Override
+	public void acceptSerializer(TraceSerializer serializer) {
+		serializer.serialize(this);
 	}
 
 }

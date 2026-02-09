@@ -3,6 +3,8 @@ package org.jdiextractor.tracemodel.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jdiextractor.service.serializer.TraceSerializer;
+
 import com.sun.jdi.Method;
 
 /**
@@ -15,7 +17,9 @@ public class TraceMethod extends TraceElement {
 	private TraceReceiver receiver = null;
 
 	private List<TraceArgument> arguments = new ArrayList<>();
-	
+
+	private String name;
+
 	private String signature;
 
 	public TraceMethod() {
@@ -49,21 +53,34 @@ public class TraceMethod extends TraceElement {
 	public void addArgument(TraceArgument argument) {
 		this.arguments.add(argument);
 	}
-	
+
 	public void setSignature(String signature) {
 		this.signature = signature;
 	}
-	
+
 	public String getSignature() {
 		return this.signature;
 	}
 
+	private void setName(String name) {
+		this.name = name;
+
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
 	public static TraceMethod from(Method method) {
 		TraceMethod traceMethod = new TraceMethod();
+		traceMethod.setName(method.name());
 		traceMethod.setSignature(method.signature());
 		return traceMethod;
 	}
 
-	
+	@Override
+	public void acceptSerializer(TraceSerializer serializer) {
+		serializer.serialize(this);
+	}
 
 }

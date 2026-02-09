@@ -1,5 +1,6 @@
 package org.jdiextractor.tracemodel.entities;
 
+import org.jdiextractor.service.serializer.TraceSerializer;
 import org.jdiextractor.tracemodel.TraceEntity;
 
 public class TraceAssignationLeft extends TraceEntity implements TraceValueContainer {
@@ -16,6 +17,11 @@ public class TraceAssignationLeft extends TraceEntity implements TraceValueConta
 
 	public void setValue(TraceValue value) {
 		this.value = value;
+	}
+
+	@Override
+	public void acceptSerializer(TraceSerializer serializer) {
+		serializer.serialize(this);
 	}
 
 }

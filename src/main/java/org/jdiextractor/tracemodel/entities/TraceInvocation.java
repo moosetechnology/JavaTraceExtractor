@@ -1,5 +1,6 @@
 package org.jdiextractor.tracemodel.entities;
 
+import org.jdiextractor.service.serializer.TraceSerializer;
 import org.jdiextractor.tracemodel.TraceEntity;
 
 import com.sun.jdi.Method;
@@ -11,7 +12,7 @@ public class TraceInvocation extends TraceEntity {
 
 	private Method sender;
 	private Method invokee;
-	
+
 	public TraceInvocation(Method sender, Method invokee) {
 		this.sender = sender;
 		this.invokee = invokee;
@@ -32,7 +33,10 @@ public class TraceInvocation extends TraceEntity {
 	public void setInvokee(Method invokee) {
 		this.invokee = invokee;
 	}
-	
-	
-	
+
+	@Override
+	public void acceptSerializer(TraceSerializer serializer) {
+		serializer.serialize(this);
+	}
+
 }
