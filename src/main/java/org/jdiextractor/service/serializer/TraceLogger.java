@@ -10,17 +10,13 @@ public class TraceLogger {
 
 	private LoggingConfig loggingConfig;
 
-	private int maxDepth;
-
 	/**
 	 * Constructor of TraceLogger
 	 * 
 	 * @param loggingConfig information to instantiate the logger
-	 * @param depth         the max depth of the object graphs
 	 */
-	public TraceLogger(LoggingConfig loggingConfig, int depth) {
+	public TraceLogger(LoggingConfig loggingConfig) {
 		this.loggingConfig = loggingConfig;
-		this.maxDepth = depth;
 	}
 
 	public void serialize(Trace trace) {
