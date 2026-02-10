@@ -58,8 +58,16 @@ public class TraceSerializerJson extends TraceSerializer {
 
 	@Override
 	public void serialize(TraceArgument traceArgument) {
-
-		traceArgument.getValue().acceptSerializer(this);
+		TraceValue value = traceArgument.getValue();
+		if (value == null) {
+			try {
+				writer.write("null");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			value.acceptSerializer(this);
+		}
 	}
 
 	@Override
@@ -180,7 +188,13 @@ public class TraceSerializerJson extends TraceSerializer {
 		try {
 			writer.write(this.objectStart());
 			writer.write(quotes("name") + ":");
-			writer.write(quotes(traceParameter.getName()));
+			String name = traceParameter.getName();
+			if (name == null) {
+				writer.write("null");
+			} else {
+
+				writer.write(quotes(traceParameter.getName()));
+			}
 			writer.write(this.joinElementListing());
 			writer.write(quotes("type") + ":");
 			writer.write(quotes(traceParameter.getTypeName()));
@@ -391,9 +405,6 @@ public class TraceSerializerJson extends TraceSerializer {
 		writer.write(this.objectStart());
 		writer.write(quotes("type") + ":" + quotes(traceObjectReference.getType()));
 		writer.write(this.joinElementListing());
-		if (traceObjectReference.getUniqueID() == 220) {
-			int i = 0;
-		}
 		writer.write(quotes("uniqueId") + ":" + traceObjectReference.getUniqueID());
 		writer.write(this.joinElementListing());
 		writer.write(quotes("refered") + ":");

@@ -1,6 +1,6 @@
 package org.jdiextractor.core.callstack.strategy;
 
-import java.util.Iterator;
+import java.util.List;
 
 import org.jdiextractor.config.JDIExtractorConfig;
 import org.jdiextractor.core.callstack.AbstractCallStackExtractor;
@@ -40,17 +40,15 @@ public class CallStackSnapshotExtractorWithMM extends AbstractCallStackExtractor
 			this.waitForBreakpoint();
 
 			// Extract all frames
-			Iterator<StackFrame> ite = this.getThread().frames().iterator();
-			while (ite.hasNext()) {
-				StackFrame next = ite.next();
-				try {
-
-					tracePopulator.newMethodFrom(next.location().method(), next.getArgumentValues(), next.thisObject());
-
-				} catch (InternalException e) {
-					// Happens for native calls, and can't be obtained
-					tracePopulator.newMethodFrom(next.location().method(), null, next.thisObject());
-				}
+			List<StackFrame> frames = this.getThread().frames();
+			for (int i = frames.size() - 1; i >= 0; i--) {
+			    StackFrame next = frames.get(i);
+			    try {
+			        tracePopulator.newMethodFrom(next.location().method(), next.getArgumentValues(), next.thisObject());
+			    } catch (InternalException e) {
+			    	// Happens for native calls, and can't be obtained
+			        tracePopulator.newMethodFrom(next.location().method(), null, next.thisObject());
+			    }
 			}
 
 			// Serialize the trace

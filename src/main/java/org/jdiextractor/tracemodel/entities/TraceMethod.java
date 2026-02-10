@@ -24,7 +24,7 @@ public class TraceMethod extends TraceElement {
 
 	private boolean isClassSide;
 
-	private boolean isArgsAccessible;
+	private boolean isArgsAccessible = true;
 
 	private String parentType;
 

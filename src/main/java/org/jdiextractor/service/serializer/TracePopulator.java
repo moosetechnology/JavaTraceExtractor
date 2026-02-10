@@ -77,7 +77,7 @@ public class TracePopulator {
 		if (argumentValues == null) {
 			traceMethod.setArgumentAccessible(false);
 		} else {
-			Iterator<TraceArgument> ite = this.createArgumentFor(argumentValues).iterator();
+			Iterator<TraceArgument> ite = this.createArgumentsFor(argumentValues).iterator();
 			while (ite.hasNext()) {
 				traceMethod.addArgument(ite.next());
 			}
@@ -100,7 +100,7 @@ public class TracePopulator {
 		return traceReceiver;
 	}
 
-	private List<TraceArgument> createArgumentFor(List<Value> argumentValues) {
+	private List<TraceArgument> createArgumentsFor(List<Value> argumentValues) {
 		List<TraceArgument> res = new ArrayList<>();
 		Iterator<Value> argumentsValueIterator = argumentValues.iterator();
 
@@ -142,7 +142,7 @@ public class TracePopulator {
 			Iterator<LocalVariable> ite = method.arguments().iterator();
 
 			while (ite.hasNext()) {
-				this.newParameterFrom(ite.next());
+				res.add(newParameterFrom(ite.next()));
 			}
 
 		} catch (AbsentInformationException e) {
@@ -151,7 +151,7 @@ public class TracePopulator {
 			Iterator<String> ite = method.argumentTypeNames().iterator();
 
 			while (ite.hasNext()) {
-				this.newParameterFrom(ite.next());
+				res.add(this.newParameterFrom(ite.next()));
 			}
 		}
 
@@ -199,9 +199,6 @@ public class TracePopulator {
 
 	private TraceValue newValueFromObjectReference(ObjectReference objectReference, int depth) {
 		long id = objectReference.uniqueID();
-		if (id == 220) {
-			int i = 0;
-		}
 		if (visitedIds.contains(id)) {
 			return new TraceValueAlreadyFound(id);
 		} else {

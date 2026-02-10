@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class JDIExtractorConfig {
 
-	private static final int DEFAULT_MAX_DEPTH = 20;
+	private static final int DEFAULT_MAX_DEPTH = 14;
 
 	private VmConfig vm;
 	private BreakpointConfig endpoint;
