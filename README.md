@@ -1,4 +1,4 @@
-# JavaCallStackExtractor 
+# JavaCallStackExtractor
 
 JavaCallStackExtractor is a tool designed to extract as much information as possible from a Java call stack stored in a text-based file.  
 It was created to provide a parser for Java call stacks, enabling their analysis within the [Moose](https://moosetechnology.org/) software analysis platform by generating a dedicated meta-model.   
@@ -17,7 +17,7 @@ Using different versions may lead to unexpected behavior.
 ### Step 1: Launch the program you want to analyze with the following VM argument:
 ```
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006 
-``` 
+```
 
 
 In Eclipse, you can add this argument in the *Run Configuration > VM Arguments* section: 
@@ -31,13 +31,16 @@ This command enables debug mode on the Java VM:
 - address=5006: Port used to wait for debugger connection
 
 ### Step 2: Configure the Extractor
-Edit the config.json file to fit the structure of your project.
+Edit the configXX.json file to fit the structure of your project.  
+A different configuration file is present for every algorithms by default.  
 Refer to  [config.md](utils/tutorials/config.md) for detailed instructions.
 
 ### Step 3: Run the Extractor
-Run either :
+**you can pass a path to a config file in argument if you need to keep trace of multiple configurations**  
+Run either : 
 - SnapshotCSExtractorLauncher : Fast, but object states are captured at the very end. 
 	- Usefull for concepts
 - HistoryCSExtractorLauncher : Slow, but historically accurate.
-	- Usefull for in depth analysis
+	- Usefull for in depth analysis  
+	
 The output will be generated in the root directory of this repository.

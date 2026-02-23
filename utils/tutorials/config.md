@@ -22,9 +22,8 @@
 		],
 		"repBefore": 0
 	},
-	"maxDepth" : 20,
+	"maxObjectDepth" : 14,
 	"logging": {
-		"format"  : "json",
 		"outputName" : "JDIOutput",
 		"extension": "cs"
 		
@@ -72,14 +71,7 @@ In this case:
 }
 ```
 
-### maxDepth
-Sets the maximum recursion depth for call stack logging.
+### maxObjectDepth
+Sets the maximum recursion depth of the object graph.
 Use a negative number for unlimited depth.
 
-### logging
-Controls how the output is formatted and where it is saved.
-- format : Output format – currently supports "json"  
-  (You can easily add new formats – see [addLoggerFormat.md](addLoggerFormat.md))
-- outputName : Base name of the output file
-- extension : File extension (default is "cs").  
-  This is important for compatibility with import tools like [FamixCallStack](https://github.com/LeoDefossez/FamixCallStack#)
