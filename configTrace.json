@@ -25,6 +25,6 @@
 	"maxMethodDepth" : 14,
 	"logging": {
 		"outputName" : "JDIOutput",
-		"extension": "cs"
+		"extension": "tr"
 	}
 }

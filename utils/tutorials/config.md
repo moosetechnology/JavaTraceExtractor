@@ -25,8 +25,7 @@
 	"maxObjectDepth" : 14,
 	"logging": {
 		"outputName" : "JDIOutput",
-		"extension": "cs"
-		
+		"extension": "tr"
 	}
 }
 }
@@ -75,3 +74,10 @@ In this case:
 Sets the maximum recursion depth of the object graph.
 Use a negative number for unlimited depth.
 
+### logging
+
+Controls how the output is formatted and where it is saved.
+
+- outputName : Base name of the output file
+- extension : File extension (default is "tr").
+This is important for compatibility with import tools like FamixJavaTrace.

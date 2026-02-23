@@ -1,8 +1,11 @@
 # JavaCallStackExtractor
 
 JavaCallStackExtractor is a tool designed to extract as much information as possible from a Java call stack stored in a text-based file.  
-It was created to provide a parser for Java call stacks, enabling their analysis within the [Moose](https://moosetechnology.org/) software analysis platform by generating a dedicated meta-model.   
-For More information about this meta-model see the [FamixCallStack](https://github.com/LeoDefossez/FamixCallStack) project.
+Provide ability to extract java traces compatible with [FamixJavaTrace](https://github.com/LeoDefossez/Famix-JavaTrace) enabling their analysis within the [Moose](https://moosetechnology.org/) software analysis platform by generating a dedicated meta-model.
+
+It was first created to provide a parser for Java call stacks, **Support dropped since v1.0.0**.   
+For More information about this meta-model see the [FamixCallStack](https://github.com/moosetechnology/FamixCallStack) project.
+
 
 
 ##  How to use
