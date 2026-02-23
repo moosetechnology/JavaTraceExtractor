@@ -1,6 +1,8 @@
 package org.jdiextractor.core;
 
 import org.jdiextractor.config.TraceExtractorStepConfig;
+import org.jdiextractor.service.serializer.TraceLogger;
+import org.jdiextractor.service.serializer.TracePopulator;
 
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
@@ -76,8 +78,14 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 		if (config.collectValues()) {
 			super.createMethodWith(frame);
 		} else {
-			this.tracePopulator.newMethodFrom(frame.location().method());
+			this.jdiToTraceConverter.newMethodFrom(frame.location().method());
 		}
+	}
+	
+	@Override
+	protected void createTracePopulator() {
+		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
+		this.jdiToTraceConverter = new TracePopulator(valuesIndependents, config.getObjectMaxDepth(), logger);
 	}
 
 }

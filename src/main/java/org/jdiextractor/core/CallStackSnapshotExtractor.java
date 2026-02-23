@@ -3,6 +3,8 @@ package org.jdiextractor.core;
 import java.util.List;
 
 import org.jdiextractor.config.CallStackSnapshotExtractorConfig;
+import org.jdiextractor.service.serializer.TraceLogger;
+import org.jdiextractor.service.serializer.TracePopulator;
 
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
@@ -58,6 +60,12 @@ public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnaps
 	@Override
 	protected void reactToMethodEntryEvent(MethodEntryEvent event) {
 		// Nothing, should not happen in this scenario
+	}
+
+	@Override
+	protected void createTracePopulator() {
+		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
+		this.jdiToTraceConverter = new TracePopulator(valuesIndependents, config.getObjectMaxDepth(), logger);
 	}
 
 

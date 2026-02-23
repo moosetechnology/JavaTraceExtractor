@@ -1,8 +1,8 @@
 package org.jdiextractor.core;
 
 import org.jdiextractor.config.CallStackHistoryExtractorConfig;
-import org.jdiextractor.tracemodel.entities.Trace;
-
+import org.jdiextractor.service.serializer.TraceLogger;
+import org.jdiextractor.service.serializer.TracePopulator;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.MethodEntryEvent;
@@ -17,6 +17,8 @@ import com.sun.jdi.request.StepRequest;
  * were at the moment of execution.
  */
 public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistoryExtractorConfig> {
+	
+	private int frameCount = 0;
 
 	public CallStackHistoryExtractor() {
 		super(true);
@@ -31,6 +33,12 @@ public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistor
 			// Should not happen because we are supposed to be at a breakpoint
 			throw new IllegalStateException("Thread should be at a breakpoint but isn't");
 		}
+	}
+	
+	@Override
+	protected void createTracePopulator() {
+		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
+		this.jdiToTraceConverter = new TracePopulator(valuesIndependents, config.getObjectMaxDepth(), logger);
 	}
 
 	/**
@@ -53,14 +61,14 @@ public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistor
 	protected void reactToStepEvent(StepEvent event) {
 		try {
 			ThreadReference targetThread = event.thread();
-			Trace trace = this.tracePopulator.getTrace();
-			int size = trace.size();
-			int frameCount = targetThread.frameCount();
+			frameCount = targetThread.frameCount();
 
-			if (size + 1 == frameCount) {
+			if (frameCount + 1 == frameCount) {
 				this.createMethodWith(targetThread.frame(0));
-			} else if (size - 1 == frameCount) {
-				trace.removeLastElement();
+				frameCount++;
+			} else if (frameCount - 1 == frameCount) {
+				this.jdiToTraceConverter.removeLastElement();
+				frameCount--;
 			}
 		} catch (IncompatibleThreadStateException e) {
 			throw new IllegalStateException("Exception occured during a step event : " + e);

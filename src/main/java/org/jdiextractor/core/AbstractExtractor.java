@@ -6,8 +6,7 @@ import org.jdiextractor.config.AbstractExtractorConfig;
 import org.jdiextractor.config.components.BreakpointConfig;
 import org.jdiextractor.service.breakpoint.BreakPointInstaller;
 import org.jdiextractor.service.breakpoint.BreakpointWrapper;
-import org.jdiextractor.service.serializer.TraceLogger;
-import org.jdiextractor.service.serializer.TracePopulator;
+import org.jdiextractor.service.serializer.JDIToTraceConverter;
 
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.InternalException;
@@ -54,7 +53,7 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	/**
 	 * The trace model built during execution
 	 */
-	protected TracePopulator tracePopulator;
+	protected JDIToTraceConverter jdiToTraceConverter;
 
 	/**
 	 * Whether the values are independents between all element of the trace or not
@@ -101,9 +100,7 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 		this.vm = vm;
 	}
 
-	protected void createTracePopulator() {
-		this.tracePopulator = new TracePopulator(valuesIndependents, config.getObjectMaxDepth());
-	}
+	protected abstract void createTracePopulator();
 
 	/**
 	 * Returns the thread where the execution to extract takes place
@@ -227,12 +224,11 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 			argValues = null;
 		}
 
-		tracePopulator.newMethodFrom(method, argValues, receiver);
+		jdiToTraceConverter.newMethodFrom(method, argValues, receiver);
 	}
 
 	protected void serializeTrace() {
-		TraceLogger serializer = new TraceLogger(config.getLogging(), this.valuesIndependents);
-		serializer.serialize(this.tracePopulator.getTrace());
+		this.jdiToTraceConverter.serialize();
 	}
 
 	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event);

@@ -13,6 +13,7 @@
 
 # outputs
 *.cs
+*.tr
 /.gradle/
 bin/
 build
