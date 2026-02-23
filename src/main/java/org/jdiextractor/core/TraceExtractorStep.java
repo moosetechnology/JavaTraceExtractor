@@ -2,7 +2,7 @@ package org.jdiextractor.core;
 
 import org.jdiextractor.config.TraceExtractorStepConfig;
 import org.jdiextractor.service.serializer.TraceLogger;
-import org.jdiextractor.service.serializer.DefferedTraceConverter;
+import org.jdiextractor.service.serializer.BufferedTraceConverter;
 
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
@@ -85,7 +85,7 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 	@Override
 	protected void createTracePopulator() {
 		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
-		this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
+		this.jdiToTraceConverter = new BufferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
 	}
 
 }
