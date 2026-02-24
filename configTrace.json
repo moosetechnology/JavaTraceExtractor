@@ -19,10 +19,10 @@
 		],
 		"repBefore": 0
 	},
-	"activateEndpoint" : true,
-	"collectValues" : false,
+	"activateEndpoint" : false,
+	"collectValues" : true,
 	"maxObjectDepth" : 14,
-	"maxMethodDepth" : 14,
+	"maxMethodDepth" : 21,
 	"logging": {
 		"outputName" : "JDIOutput",
 		"extension": "tr"
