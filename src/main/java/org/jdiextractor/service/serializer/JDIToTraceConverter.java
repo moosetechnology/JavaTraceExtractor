@@ -14,7 +14,6 @@ import org.jdiextractor.tracemodel.entities.TraceReceiver;
 import org.jdiextractor.tracemodel.entities.TraceValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
-import org.jdiextractor.tracemodel.entities.traceValues.TraceClassNotPrepared;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceField;
 import org.jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
@@ -215,16 +214,14 @@ public abstract class JDIToTraceConverter {
 	}
 
 	private TraceValue newClassReferenceFrom(ObjectReference ref, ReferenceType type, int depth) {
-
-		if (!type.isPrepared()) {
-			TraceClassNotPrepared traceClassNotPrepared = new TraceClassNotPrepared();
-			traceClassNotPrepared.setUniqueID(ref.uniqueID());
-			traceClassNotPrepared.setType(ref.referenceType().name());
-			return traceClassNotPrepared;
-		}
 		TraceClassReference traceClassReference = new TraceClassReference();
 		traceClassReference.setUniqueID(ref.uniqueID());
 		traceClassReference.setType(ref.referenceType().name());
+
+		if (!type.isPrepared()) {
+			traceClassReference.setPrepared(false);
+			return traceClassReference;
+		}
 
 		Iterator<Field> iterator = type.allFields().iterator();
 		while (iterator.hasNext()) {
