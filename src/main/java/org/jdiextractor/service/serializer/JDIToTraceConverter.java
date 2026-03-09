@@ -19,7 +19,6 @@ import org.jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceField;
 import org.jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceStringReference;
-import org.jdiextractor.tracemodel.entities.traceValues.TraceValueMaxDepth;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
 
 import com.sun.jdi.AbsentInformationException;
@@ -177,9 +176,7 @@ public abstract class JDIToTraceConverter {
 
 	private TraceValue newValueFrom(Value value, int depth) {
 		TraceValue traceValue;
-		if (maxObjectDepth >= 0 & depth > maxObjectDepth) {
-			traceValue = new TraceValueMaxDepth();
-		} else if (value == null) {
+		if (value == null) {
 			traceValue = null;
 		} else if (value instanceof PrimitiveValue) {
 			traceValue = newValueFromPrimitiveValue((PrimitiveValue) value, depth);
@@ -249,8 +246,11 @@ public abstract class JDIToTraceConverter {
 			tracefield.setAccessible(false);
 			return tracefield;
 		}
-
-		tracefield.setValue(this.newValueFrom(fieldValue, depth + 1));
+		if (maxObjectDepth >= 0 & depth + 1 > maxObjectDepth) {
+			tracefield.setAtMaxDepth(true);
+		} else {
+			tracefield.setValue(this.newValueFrom(fieldValue, depth + 1));
+		}
 
 		return tracefield;
 	}
@@ -341,5 +341,4 @@ public abstract class JDIToTraceConverter {
 		int lastDotIndex = s.lastIndexOf('.');
 		return lastDotIndex == -1 ? s : s.substring(lastDotIndex + 1);
 	}
-s
 }

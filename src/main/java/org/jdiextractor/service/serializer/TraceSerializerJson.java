@@ -24,7 +24,6 @@ import org.jdiextractor.tracemodel.entities.traceValues.TraceObjectReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceStringReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
-import org.jdiextractor.tracemodel.entities.traceValues.TraceValueMaxDepth;
 
 public class TraceSerializerJson extends TraceSerializer {
 
@@ -244,15 +243,6 @@ public class TraceSerializerJson extends TraceSerializer {
 	}
 
 	@Override
-	public void serialize(TraceValueMaxDepth traceValueMaxDepth) {
-		try {
-			writer.write(quotes("<<MAX_DEPTH_REACHED>>"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
 	public void serialize(TracePrimitiveValue tracePrimitiveValue) {
 
 		try {
@@ -306,10 +296,15 @@ public class TraceSerializerJson extends TraceSerializer {
 
 			// ArrayReference Start
 			writer.write(this.objectStart());
+
 			writer.write(quotes("elements") + ":");
 			writer.write(this.arrayStart());
 			if (traceArrayReference.isAtMaxDepth()) {
-				writer.write(quotes("<<MAX_DEPTH_REACHED>>"));
+				// close array
+				writer.write(this.arrayEnd());
+				writer.write(this.joinElementListing());
+				writer.write(quotes("atMaxDepth") + ":");
+				writer.write("true");
 			} else {
 				Iterator<TraceArrayValue> ite = traceArrayReference.getArrayValues().iterator();
 				if (ite.hasNext()) {
@@ -319,10 +314,9 @@ public class TraceSerializerJson extends TraceSerializer {
 					writer.write(this.joinElementListing());
 					ite.next().acceptSerializer(this);
 				}
+				// close array
+				writer.write(this.arrayEnd());
 			}
-
-			// close array
-			writer.write(this.arrayEnd());
 
 			// close fields
 			writer.write(this.objectEnd());
@@ -411,6 +405,12 @@ public class TraceSerializerJson extends TraceSerializer {
 				}
 			} else {
 				writer.write(quotes("accessible") + ":" + "false");
+			}
+			
+			if(traceField.isAtMaxDepth() ) {
+				writer.write(this.joinElementListing());
+				writer.write(quotes("atMaxDepth") + ":");
+				writer.write("true");
 			}
 
 			// close object for field description field
