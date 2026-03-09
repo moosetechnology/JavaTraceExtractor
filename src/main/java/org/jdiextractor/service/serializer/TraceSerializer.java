@@ -18,7 +18,6 @@ import org.jdiextractor.tracemodel.entities.traceValues.TraceField;
 import org.jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceStringReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
-import org.jdiextractor.tracemodel.entities.traceValues.TraceValueMaxDepth;
 
 public abstract class TraceSerializer {
 
@@ -45,8 +44,6 @@ public abstract class TraceSerializer {
 	public abstract void serialize(TraceAssignationRight traceAssignationRight);
 
 	public abstract void serialize(TraceParameter traceParameter);
-
-	public abstract void serialize(TraceValueMaxDepth traceValueMaxDepth);
 
 	public abstract void serialize(TracePrimitiveValue tracePrimitiveValue);
 
