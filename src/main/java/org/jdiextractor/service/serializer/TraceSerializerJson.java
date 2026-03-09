@@ -17,7 +17,6 @@ import org.jdiextractor.tracemodel.entities.TraceReceiver;
 import org.jdiextractor.tracemodel.entities.TraceValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
-import org.jdiextractor.tracemodel.entities.traceValues.TraceClassNotPrepared;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceField;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceObjectReference;
@@ -342,41 +341,33 @@ public class TraceSerializerJson extends TraceSerializer {
 	}
 
 	@Override
-	public void serialize(TraceClassNotPrepared traceClassNotPrepared) {
-		try {
-			this.ObjectReferenceStart(traceClassNotPrepared);
-			writer.write(quotes("<<CLASS_NOT_PREPARED>>"));
-			this.ObjectReferenceEnd(traceClassNotPrepared);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
 	public void serialize(TraceClassReference traceClassReference) {
 		try {
 			this.ObjectReferenceStart(traceClassReference);
-
-			// open object for fields
+			// open object
 			writer.write(this.objectStart());
+			if (traceClassReference.isPrepared()) {
 
-			writer.write(quotes("fields") + ":");
-			// open array
-			writer.write(this.arrayStart());
-			Iterator<TraceField> ite = traceClassReference.getFields().iterator();
-			if (ite.hasNext()) {
-				ite.next().acceptSerializer(this);
-			}
-			while (ite.hasNext()) {
-				writer.write(this.joinElementListing());
-				ite.next().acceptSerializer(this);
-			}
-			// close array
-			writer.write(this.arrayEnd());
+				writer.write(quotes("fields") + ":");
+				// open array
+				writer.write(this.arrayStart());
+				Iterator<TraceField> ite = traceClassReference.getFields().iterator();
+				if (ite.hasNext()) {
+					ite.next().acceptSerializer(this);
+				}
+				while (ite.hasNext()) {
+					writer.write(this.joinElementListing());
+					ite.next().acceptSerializer(this);
+				}
+				// close array
+				writer.write(this.arrayEnd());
 
-			// close fields
+			} else {
+				writer.write(quotes("isPrepared") + ":" + "true");
+			}
+
+			// close object
 			writer.write(this.objectEnd());
-
 			this.ObjectReferenceEnd(traceClassReference);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -406,8 +397,8 @@ public class TraceSerializerJson extends TraceSerializer {
 			} else {
 				writer.write(quotes("accessible") + ":" + "false");
 			}
-			
-			if(traceField.isAtMaxDepth() ) {
+
+			if (traceField.isAtMaxDepth()) {
 				writer.write(this.joinElementListing());
 				writer.write(quotes("atMaxDepth") + ":");
 				writer.write("true");
