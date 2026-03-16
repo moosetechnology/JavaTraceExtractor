@@ -35,7 +35,7 @@ public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnaps
 
 			// Extract all frames
 			List<StackFrame> frames = this.getThread().frames();
-			for (int i = frames.size() - startFrame - 1; i >= 0; i--) {
+			for (int i = frames.size() - startFrame ; i >= 0; i--) {
 				StackFrame next = frames.get(i);
 				this.createMethodWith(next);
 			}
