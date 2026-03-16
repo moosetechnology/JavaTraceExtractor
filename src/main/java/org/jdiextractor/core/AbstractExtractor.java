@@ -111,8 +111,8 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	 * @return the thread where the execution to extract takes place
 	 */
 	protected ThreadReference getThread() {
-		// WARNING: We assume the thread name matches 'entryMethod' (usually "main")
-		return this.getThreadNamed(config.getEntrypoint().getMethodName());
+		// WARNING: We assume the thread name matches "main"
+		return this.getThreadNamed("main");
 	}
 
 	/**

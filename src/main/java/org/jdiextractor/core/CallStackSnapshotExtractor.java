@@ -18,7 +18,6 @@ import com.sun.jdi.event.StepEvent;
  */
 public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnapshotExtractorConfig> {
 
-
 	public CallStackSnapshotExtractor() {
 		super(false);
 	}
@@ -26,12 +25,14 @@ public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnaps
 	@Override
 	protected void executeExtraction() {
 		try {
-			// wait for the breakpoint
-			this.waitForBreakpoint();
+			this.processEventsUntil(config.getEntrypoint());
+			int startFrame = this.getThread().frameCount();
+
+			this.processEventsUntil(config.getEndpoint());
 
 			// Extract all frames
 			List<StackFrame> frames = this.getThread().frames();
-			for (int i = frames.size() - 1; i >= 0; i--) {
+			for (int i = frames.size() - startFrame - 1; i >= 0; i--) {
 				StackFrame next = frames.get(i);
 				this.createMethodWith(next);
 			}
@@ -44,12 +45,6 @@ public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnaps
 		}
 	}
 
-
-
-	private void waitForBreakpoint() throws IncompatibleThreadStateException {
-		this.processEventsUntil(config.getEndpoint());
-	}
-
 	@Override
 	protected void reactToStepEvent(StepEvent event) {
 		// Nothing, should not happen in this scenario
@@ -59,6 +54,5 @@ public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnaps
 	protected void reactToMethodEntryEvent(MethodEntryEvent event) {
 		// Nothing, should not happen in this scenario
 	}
-
 
 }
