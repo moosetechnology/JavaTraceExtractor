@@ -432,7 +432,7 @@ public class TraceSerializerJson extends TraceSerializer {
 	@Override
 	public void serialize(TraceJavaPrimitiveType traceJavaPrimitiveType) {
 		try {
-			writer.write(traceJavaPrimitiveType.getName());
+			writer.write(quotes(traceJavaPrimitiveType.getName()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
