@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jdiextractor.service.serializer.TraceSerializer;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaType;
 
 /**
  * Represents a specific method execution call in the trace.
@@ -26,7 +27,7 @@ public class TraceMethod extends TraceElement {
 
 	private boolean isArgsAccessible = true;
 
-	private String parentType;
+	private TraceJavaType parentType;
 
 	public TraceMethod() {
 
@@ -103,11 +104,11 @@ public class TraceMethod extends TraceElement {
 		return this.isClassSide;
 	}
 
-	public void setParentType(String parentType) {
+	public void setParentType(TraceJavaType parentType) {
 		this.parentType = parentType;
 	}
 
-	public String getParentType() {
+	public TraceJavaType getParentType() {
 		return this.parentType;
 	}
 

@@ -2,9 +2,14 @@ package org.jdiextractor.tracemodel.entities;
 
 import org.jdiextractor.service.serializer.TraceSerializer;
 import org.jdiextractor.tracemodel.TraceEntity;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaType;
 
 public class TraceParameter extends TraceEntity {
-	
+
+	private String name;
+
+	private TraceJavaType type;
+
 	public String getName() {
 		return name;
 	}
@@ -13,23 +18,17 @@ public class TraceParameter extends TraceEntity {
 		this.name = name;
 	}
 
-	public String getTypeName() {
-		return typeName;
+	public TraceJavaType getType() {
+		return type;
 	}
 
-	public void setTypeName(String typeName) {
-		this.typeName = typeName;
+	public void setType(TraceJavaType type) {
+		this.type = type;
 	}
-
-	private String name;
-	
-	private String typeName;
 
 	@Override
 	public void acceptSerializer(TraceSerializer serializer) {
 		serializer.serialize(this);
 	}
 
-	
-	
 }

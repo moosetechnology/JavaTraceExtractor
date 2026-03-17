@@ -10,7 +10,7 @@ public class TraceClassReference extends TraceObjectReference {
 	private List<TraceField> fields = new ArrayList<>();
 
 	private boolean isPrepared = true;
-
+	
 	public boolean isPrepared() {
 		return isPrepared;
 	}

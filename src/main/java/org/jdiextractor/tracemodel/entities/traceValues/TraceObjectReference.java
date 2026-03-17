@@ -1,12 +1,13 @@
 package org.jdiextractor.tracemodel.entities.traceValues;
 
 import org.jdiextractor.tracemodel.entities.TraceValue;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaType;
 
 public abstract class TraceObjectReference extends TraceValue {
 
 	protected long uniqueID;
 
-	private String type;
+	private TraceJavaType type;
 
 	public long getUniqueID() {
 		return uniqueID;
@@ -16,11 +17,11 @@ public abstract class TraceObjectReference extends TraceValue {
 		this.uniqueID = uniqueID;
 	}
 
-	public void setType(String type) {
+	public void setType(TraceJavaType type) {
 		this.type = type;
 	}
 
-	public String getType() {
+	public TraceJavaType getType() {
 		return this.type;
 	}
 }

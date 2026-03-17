@@ -12,6 +12,9 @@ import org.jdiextractor.tracemodel.entities.TraceMethod;
 import org.jdiextractor.tracemodel.entities.TraceParameter;
 import org.jdiextractor.tracemodel.entities.TraceReceiver;
 import org.jdiextractor.tracemodel.entities.TraceValue;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaPrimitiveType;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaType;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
@@ -22,6 +25,7 @@ import org.jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
 
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.Field;
 import com.sun.jdi.LocalVariable;
 import com.sun.jdi.Method;
@@ -29,6 +33,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.StringReference;
+import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 
 public abstract class JDIToTraceConverter {
@@ -105,12 +110,44 @@ public abstract class JDIToTraceConverter {
 		traceMethod.setName(method.name());
 		traceMethod.setSignature(this.signatureParameter(method));
 		traceMethod.setClassSide(method.isStatic());
-		traceMethod.setParentType(this.parentType(method));
+		traceMethod.setParentType(this.newJavaClassFrom(method.location().declaringType()));
 		Iterator<TraceParameter> ite = this.createParametersFor(method).iterator();
 		while (ite.hasNext()) {
 			traceMethod.addParameter(ite.next());
 		}
 		return traceMethod;
+	}
+
+	private TraceJavaType newJavaTypeFrom(Type type) {
+		if (type instanceof ReferenceType) {
+			return newJavaClassFrom((ReferenceType) type);
+		} else {
+			return new TraceJavaPrimitiveType(type.name());
+		}
+	}
+
+	/**
+	 * Create a JavaType from a String Pay Attention : this method is not able to
+	 * determine whether a class is parametric or not
+	 * 
+	 * @param typeName the name of the JavaType to create
+	 * @return the JavaType created
+	 */
+	private TraceJavaType newJavaTypeFrom(String typeName) {
+		if (typeName.contains(".") || Character.isUpperCase(typeName.charAt(0))) {
+			return new TraceJavaClass(typeName);
+		} else {
+			return new TraceJavaPrimitiveType(typeName);
+		}
+	}
+
+	private TraceJavaClass newJavaClassFrom(ReferenceType declaringType) {
+		TraceJavaClass traceJavaClass = new TraceJavaClass(declaringType.name());
+
+		if (declaringType.genericSignature() != null) {
+			traceJavaClass.setIsParametric(true);
+		}
+		return traceJavaClass;
 	}
 
 	private TraceReceiver newReceiverFrom(ObjectReference receiverObject) {
@@ -149,8 +186,8 @@ public abstract class JDIToTraceConverter {
 		} catch (AbsentInformationException e) {
 			// arguments name could not be obtained
 			// Since the name are not obtainable just log the parameters types
+			// This happen when classes are not yet loaded or with native methods
 			Iterator<String> ite = method.argumentTypeNames().iterator();
-
 			while (ite.hasNext()) {
 				res.add(this.newParameterFrom(ite.next()));
 			}
@@ -162,14 +199,18 @@ public abstract class JDIToTraceConverter {
 	private TraceParameter newParameterFrom(LocalVariable param) {
 		TraceParameter traceParameter = new TraceParameter();
 		traceParameter.setName(param.name());
-		traceParameter.setTypeName(param.typeName());
+		try {
+			traceParameter.setType(this.newJavaTypeFrom(param.type()));
+		} catch (ClassNotLoadedException e) {
+			throw new RuntimeException("Should not happen");
+		}
 		return traceParameter;
 	}
 
 	private TraceParameter newParameterFrom(String typeName) {
 		TraceParameter traceParameter = new TraceParameter();
 		traceParameter.setName(null);
-		traceParameter.setTypeName(typeName);
+		traceParameter.setType(this.newJavaTypeFrom(typeName));
 		return traceParameter;
 	}
 
@@ -216,7 +257,7 @@ public abstract class JDIToTraceConverter {
 	private TraceValue newClassReferenceFrom(ObjectReference ref, ReferenceType type, int depth) {
 		TraceClassReference traceClassReference = new TraceClassReference();
 		traceClassReference.setUniqueID(ref.uniqueID());
-		traceClassReference.setType(ref.referenceType().name());
+		traceClassReference.setType(this.newJavaClassFrom(type));
 
 		if (!type.isPrepared()) {
 			traceClassReference.setPrepared(false);
@@ -255,7 +296,7 @@ public abstract class JDIToTraceConverter {
 	private TraceArrayReference newArrayReferenceFrom(ArrayReference arrayReference, int depth) {
 		TraceArrayReference traceArrayReference = new TraceArrayReference();
 		traceArrayReference.setUniqueID(arrayReference.uniqueID());
-		traceArrayReference.setType(arrayReference.referenceType().name());
+		traceArrayReference.setType(this.newJavaClassFrom(arrayReference.referenceType()));
 
 		List<Value> arrayValues = arrayReference.getValues();
 
@@ -282,24 +323,8 @@ public abstract class JDIToTraceConverter {
 		TraceStringReference traceStringReference = new TraceStringReference();
 		traceStringReference.setValue(stringReference.value());
 		traceStringReference.setUniqueID(stringReference.uniqueID());
-		traceStringReference.setType(stringReference.referenceType().name());
+		traceStringReference.setType(this.newJavaClassFrom(stringReference.referenceType()));
 		return traceStringReference;
-	}
-
-	/**
-	 * Adapt the parent type of the method to make sure it matches moose parent
-	 * types
-	 * 
-	 * @param method
-	 * @return the parent type of the method
-	 */
-	private String parentType(Method method) {
-		String parentType = method.location().declaringType().name();
-		if (parentType.contains(".")) {
-			return parentType;
-		}
-
-		return "<Default Package>.".concat(parentType);
 	}
 
 	private String signatureParameter(Method method) {

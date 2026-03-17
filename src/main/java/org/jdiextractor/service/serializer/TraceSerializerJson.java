@@ -15,6 +15,8 @@ import org.jdiextractor.tracemodel.entities.TraceMethod;
 import org.jdiextractor.tracemodel.entities.TraceParameter;
 import org.jdiextractor.tracemodel.entities.TraceReceiver;
 import org.jdiextractor.tracemodel.entities.TraceValue;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaPrimitiveType;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
@@ -148,7 +150,8 @@ public class TraceSerializerJson extends TraceSerializer {
 			writer.write(this.joinElementListing());
 
 			// writing the class declaring this method
-			writer.write(quotes("parentType") + ":" + quotes(traceMethod.getParentType()));
+			writer.write(quotes("parentType") + ":");
+			traceMethod.getParentType().acceptSerializer(this);
 			writer.write(this.joinElementListing());
 
 			// writing all arguments types
@@ -233,7 +236,7 @@ public class TraceSerializerJson extends TraceSerializer {
 			}
 			writer.write(this.joinElementListing());
 			writer.write(quotes("type") + ":");
-			writer.write(quotes(traceParameter.getTypeName()));
+			traceParameter.getType().acceptSerializer(this);
 			writer.write(this.objectEnd());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -363,7 +366,7 @@ public class TraceSerializerJson extends TraceSerializer {
 				writer.write(this.arrayEnd());
 
 			} else {
-				writer.write(quotes("isPrepared") + ":" + "true");
+				writer.write(quotes("isPrepared") + ":" + "false");
 			}
 
 			// close object
@@ -426,13 +429,46 @@ public class TraceSerializerJson extends TraceSerializer {
 
 	}
 
+	@Override
+	public void serialize(TraceJavaPrimitiveType traceJavaPrimitiveType) {
+		try {
+			writer.write(traceJavaPrimitiveType.getName());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void serialize(TraceJavaClass traceJavaClass) {
+		try {
+			writer.write(this.objectStart());
+			writer.write(quotes("name") + ":");
+			if (traceJavaClass.getName().contains(".")) {
+				writer.write(quotes(traceJavaClass.getName()));
+			} else {
+				writer.write(quotes("<Default Package>.".concat(traceJavaClass.getName())));
+			}
+
+			if (traceJavaClass.isParametric()) {
+				writer.write(this.joinElementListing());
+				writer.write(quotes("isParametric") + ":" + "true");
+			}
+
+			writer.write(this.objectEnd());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	private void ObjectReferenceStart(TraceObjectReference traceObjectReference) throws IOException {
 
 		writer.write(this.objectStart());
 		writer.write(quotes("reference") + ":");
 		// open object for the description
 		writer.write(this.objectStart());
-		writer.write(quotes("type") + ":" + quotes(traceObjectReference.getType()));
+		writer.write(quotes("type") + ":");
+		traceObjectReference.getType().acceptSerializer(this);
 		writer.write(this.joinElementListing());
 		writer.write(quotes("uniqueId") + ":" + traceObjectReference.getUniqueID());
 		writer.write(this.joinElementListing());

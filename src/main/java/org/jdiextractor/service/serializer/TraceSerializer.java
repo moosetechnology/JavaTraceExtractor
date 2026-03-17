@@ -10,6 +10,8 @@ import org.jdiextractor.tracemodel.entities.TraceInvocation;
 import org.jdiextractor.tracemodel.entities.TraceMethod;
 import org.jdiextractor.tracemodel.entities.TraceParameter;
 import org.jdiextractor.tracemodel.entities.TraceReceiver;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
+import org.jdiextractor.tracemodel.entities.javaType.TraceJavaPrimitiveType;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
@@ -57,5 +59,9 @@ public abstract class TraceSerializer {
 	public abstract void serialize(TraceField traceField);
 
 	public abstract void serialize(TraceStringReference traceStringReference);
+
+	public abstract void serialize(TraceJavaPrimitiveType traceJavaPrimitiveType);
+
+	public abstract void serialize(TraceJavaClass traceJavaClass);
 
 }

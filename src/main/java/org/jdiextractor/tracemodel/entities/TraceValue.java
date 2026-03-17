@@ -8,8 +8,4 @@ import org.jdiextractor.tracemodel.TraceEntity;
  */
 public abstract class TraceValue extends TraceEntity {
 
-
-	public TraceValue() {
-
-	}
 }
