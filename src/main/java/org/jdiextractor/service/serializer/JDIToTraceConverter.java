@@ -115,6 +115,12 @@ public abstract class JDIToTraceConverter {
 		while (ite.hasNext()) {
 			traceMethod.addParameter(ite.next());
 		}
+		
+		// A method with a generericSignature is a parametric method
+		// Note we could parse the signature to know the real arguments
+		if(method.genericSignature() != null) {
+			traceMethod.setIsParametric(true);
+		}
 		return traceMethod;
 	}
 

@@ -27,6 +27,8 @@ public class TraceMethod extends TraceElement {
 
 	private boolean isArgsAccessible = true;
 
+	private boolean isParametric = false;
+
 	private TraceJavaType parentType;
 
 	public TraceMethod() {
@@ -90,11 +92,6 @@ public class TraceMethod extends TraceElement {
 		return this.name;
 	}
 
-	@Override
-	public void acceptSerializer(TraceSerializer serializer) {
-		serializer.serialize(this);
-	}
-
 	public void setClassSide(boolean isClassSide) {
 		this.isClassSide = isClassSide;
 
@@ -118,6 +115,19 @@ public class TraceMethod extends TraceElement {
 
 	public boolean isArgsAccessible() {
 		return this.isArgsAccessible;
+	}
+
+	public boolean isParametric() {
+		return isParametric;
+	}
+
+	public void setIsParametric(boolean bool) {
+		this.isParametric = bool;
+	}
+
+	@Override
+	public void acceptSerializer(TraceSerializer serializer) {
+		serializer.serialize(this);
 	}
 
 }

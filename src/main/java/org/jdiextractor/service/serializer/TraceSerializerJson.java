@@ -149,6 +149,12 @@ public class TraceSerializerJson extends TraceSerializer {
 			writer.write(quotes("isClassSide") + ":" + traceMethod.isClassSide());
 			writer.write(this.joinElementListing());
 
+			// In case the method is parametric precise it
+			if (traceMethod.isParametric()) {
+				writer.write(quotes("isParametric") + ":" + "true");
+				writer.write(this.joinElementListing());
+			}
+
 			// writing the class declaring this method
 			writer.write(quotes("parentType") + ":");
 			traceMethod.getParentType().acceptSerializer(this);
