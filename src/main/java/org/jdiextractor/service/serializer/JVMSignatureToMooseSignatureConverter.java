@@ -123,6 +123,42 @@ public class JVMSignatureToMooseSignatureConverter {
     private void appendToResultString(String str) {
     	strBuilder.append(str);
     }
+ 
+    /**
+     * Parses a continuous stream of method parameters from a JNI signature.
+     * Example input: "TK;ILjava/lang/String;"
+     * Example output: "K,int,java.lang.String"
+     * @param paramsSignature the string containing ONLY the parameters (between parentheses)
+     * @return A comma-separated string of Moose-formatted types
+     */
+    public String parseMethodParameters(String paramsSignature) {
+        if (paramsSignature == null || paramsSignature.trim().isEmpty()) {
+            return "";
+        }
+        
+        if (DEBUG) System.out.println("Parsing method parameters:" + paramsSignature);
+        
+        input = paramsSignature.toCharArray();
+        index = 0;
+        strBuilder = new StringBuilder();
+        
+        boolean isFirstParameter = true;
+        
+        // The parser reads the input stream until exhaustion
+        while (index < input.length) {
+            if (!isFirstParameter) {
+                strBuilder.append(",");
+            }
+            
+            // Consumes exactly one type (primitive, object, array, or generic)
+            // and advances the index to the exact starting position of the next type.
+            parseTypeSignature(); 
+            
+            isFirstParameter = false;
+        }
+        
+        return strBuilder.toString();
+    }
     
     /**
      * Parses a type signature and produces a signature 
@@ -137,7 +173,8 @@ public class JVMSignatureToMooseSignatureConverter {
         if (DEBUG) System.out.println("Parsing type sig:" + s);
         input = s.toCharArray();
         strBuilder = new StringBuilder();
-        parseFieldTypeSignature();
+        parseTypeSignature(); 
+        
         return strBuilder.toString();
     }
 
