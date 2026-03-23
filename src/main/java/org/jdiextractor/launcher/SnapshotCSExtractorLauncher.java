@@ -14,12 +14,12 @@ import com.fasterxml.jackson.databind.JsonNode;
  * object was modified during execution, older frames will show the
  * <i>current</i> modified value, not the value at the time of the call.
  */
-public class SnapshotCSExtractorLauncer extends AbstractLauncher<CallStackSnapshotExtractorConfig> {
+public class SnapshotCSExtractorLauncher extends AbstractLauncher<CallStackSnapshotExtractorConfig> {
 
 	private final String configFileDefaultName = "configCSSnapshot.json";
 	
 	public static void main(String[] args) throws Exception {
-		SnapshotCSExtractorLauncer launcher = new SnapshotCSExtractorLauncer();
+		SnapshotCSExtractorLauncher launcher = new SnapshotCSExtractorLauncher();
 
 		launcher.mainCore(args, new CallStackSnapshotExtractor());
 	}

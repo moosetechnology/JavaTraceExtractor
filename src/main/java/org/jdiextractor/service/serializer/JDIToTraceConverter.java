@@ -115,10 +115,10 @@ public abstract class JDIToTraceConverter {
 		while (ite.hasNext()) {
 			traceMethod.addParameter(ite.next());
 		}
-		
+
 		// A method with a generericSignature is a parametric method
 		// Note we could parse the signature to know the real arguments
-		if(method.genericSignature() != null) {
+		if (method.genericSignature() != null) {
 			traceMethod.setIsParametric(true);
 		}
 		return traceMethod;
@@ -333,9 +333,33 @@ public abstract class JDIToTraceConverter {
 		return traceStringReference;
 	}
 
+	/**
+	 * Returns the signature of a method formatted for the Moose model.
+	 * * @param method The JDI Method object
+	 * @return the signature of the method (e.g., "methodName(Type1,Type2)")
+	 */
 	private String signatureParameter(Method method) {
-		String paramString = "";
+		String genericSignature = method.genericSignature();
 
+		// 1. Absolute source of truth: The JNI generic signature
+		if (genericSignature != null) {
+			int start = genericSignature.indexOf('(');
+			int end = genericSignature.lastIndexOf(')');
+
+			if (start != -1 && end != -1) {
+				// Extract the parameter section between the parentheses
+				String paramsSignature = genericSignature.substring(start + 1, end);
+				
+				// Fully delegate the lexical parsing to the converter
+				JVMSignatureToMooseSignatureConverter parser = JVMSignatureToMooseSignatureConverter.make();
+				String parsedParams = parser.parseMethodParameters(paramsSignature);
+				
+				return String.format("%s(%s)", method.name(), parsedParams);
+			}
+		}
+
+		// 2. Standard fallback (Type erasure applied, local variables or base types)
+		String paramString = "";
 		try {
 			Iterator<LocalVariable> ite = method.arguments().iterator();
 			if (ite.hasNext()) {
@@ -345,7 +369,7 @@ public abstract class JDIToTraceConverter {
 				paramString = String.format("%s,%s", paramString, parseTypeName(ite.next()));
 			}
 		} catch (AbsentInformationException e) {
-			// In case informations are absents, still try to add informations
+			// In case debug information (local variables) is absent
 			Iterator<String> ite = method.argumentTypeNames().iterator();
 			if (ite.hasNext()) {
 				paramString = parseTypeName(ite.next());
