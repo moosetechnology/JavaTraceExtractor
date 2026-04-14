@@ -327,7 +327,11 @@ public abstract class JDIToTraceConverter {
 
 	private TraceValue newStringReferenceFrom(StringReference stringReference) {
 		TraceStringReference traceStringReference = new TraceStringReference();
-		traceStringReference.setValue(stringReference.value());
+		/* Cannot collect the value of strings because in some attacks, other type are stored instead of String in some variables
+		 * Hence we just stop to collect string value for now
+		 * see issue https://github.com/moosetechnology/JavaTraceExtractor/issues/25
+		 */
+		//traceStringReference.setValue(stringReference.value());
 		traceStringReference.setUniqueID(stringReference.uniqueID());
 		traceStringReference.setType(this.newJavaClassFrom(stringReference.referenceType()));
 		return traceStringReference;

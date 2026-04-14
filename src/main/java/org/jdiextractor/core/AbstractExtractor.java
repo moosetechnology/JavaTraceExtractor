@@ -220,7 +220,11 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	 * @throws IncompatibleThreadStateException
 	 */
 	protected void processEventsUntilEnd() throws IncompatibleThreadStateException {
-		this.processEventsUntil(null);
+		try {
+			this.processEventsUntil(null);
+		} catch (com.sun.jdi.VMDisconnectedException e) {
+		    System.err.println("VM disconnected, tracing stopped");
+		}
 	}
 
 	protected void createMethodWith(StackFrame frame) {
