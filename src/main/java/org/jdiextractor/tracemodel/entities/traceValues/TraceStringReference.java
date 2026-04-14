@@ -4,7 +4,7 @@ import org.jdiextractor.service.serializer.TraceSerializer;
 
 public class TraceStringReference extends TraceObjectReference {
 
-	private String value;
+	private String value = "";
 
 	public void setValue(String value) {
 		this.value = value;
