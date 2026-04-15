@@ -100,7 +100,7 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 	}
 
 	private boolean maxStepsAttained() {
-		return steps > 0 & steps < config.getMaxSteps();
+		return steps < 0 | steps > config.getMaxSteps();
 	}
 
 	@Override
