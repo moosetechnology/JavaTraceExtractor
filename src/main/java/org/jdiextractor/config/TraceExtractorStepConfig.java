@@ -7,6 +7,7 @@ public class TraceExtractorStepConfig extends AbstractExtractorConfig {
 	protected boolean activateEndpoint;
 	protected boolean collectValues;
 	protected int maxMethodDepth;
+	protected int maxSteps;
 
 	public static TraceExtractorStepConfig fromJson(JsonNode rootNode) {
 		TraceExtractorStepConfig config = new TraceExtractorStepConfig();
@@ -20,6 +21,7 @@ public class TraceExtractorStepConfig extends AbstractExtractorConfig {
 		this.activateEndpoint = rootNode.get("activateEndpoint").asBoolean();
 		this.collectValues = rootNode.get("collectValues").asBoolean();
 		this.maxMethodDepth = rootNode.get("maxMethodDepth").asInt();
+		this.maxSteps = rootNode.get("maxSteps").asInt();
 	}
 
 	public boolean activateEndpoint() {
@@ -34,4 +36,7 @@ public class TraceExtractorStepConfig extends AbstractExtractorConfig {
 		return this.maxMethodDepth;
 	}
 
+	public int getMaxSteps() {
+		return this.maxSteps;
+	}
 }

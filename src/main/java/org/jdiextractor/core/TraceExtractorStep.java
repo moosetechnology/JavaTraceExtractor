@@ -23,6 +23,7 @@ import com.sun.jdi.request.StepRequest;
 public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConfig> {
 
 	private int frameCountBefore;
+	private int steps = 0;
 
 	private StepRequest stepInto;
 	private StepRequest stepOver;
@@ -68,6 +69,7 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 
 	@Override
 	protected void reactToStepEvent(StepEvent event) {
+		steps++;
 		try {
 			ThreadReference targetThread = event.thread();
 			StackFrame frame = targetThread.frame(0);
@@ -85,12 +87,20 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			} else {
 				this.ensureStepInto();
 			}
+			
+			if (this.maxStepsAttained()) {
+				this.desactivateSteps();
+			}
 			// Update frameCount
 			frameCountBefore = frameCountNow;
 
 		} catch (IncompatibleThreadStateException e) {
 			throw new IllegalStateException("Exception occured during a step event : " + e);
 		}
+	}
+
+	private boolean maxStepsAttained() {
+		return steps > 0 & steps < config.getMaxSteps();
 	}
 
 	@Override

@@ -23,6 +23,7 @@
 	"collectValues" : true,
 	"maxObjectDepth" : 14,
 	"maxMethodDepth" : 21,
+	"maxSteps" : -1,
 	"logging": {
 		"outputName" : "JDIOutput",
 		"extension": "tr"
