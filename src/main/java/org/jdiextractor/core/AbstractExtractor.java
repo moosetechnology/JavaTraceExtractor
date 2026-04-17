@@ -1,6 +1,7 @@
 package org.jdiextractor.core;
 
 import java.util.List;
+import java.util.Stack;
 
 import org.jdiextractor.config.AbstractExtractorConfig;
 import org.jdiextractor.config.components.BreakpointConfig;
@@ -62,6 +63,8 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	 */
 	protected boolean valuesIndependents;
 
+	protected Stack<Integer> branchIds;
+
 	/**
 	 * Only entry point to launch an extractor
 	 * 
@@ -83,6 +86,7 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	 */
 	protected AbstractExtractor(boolean valuesIndependents) {
 		this.valuesIndependents = valuesIndependents;
+		this.branchIds = new Stack<Integer>();
 	}
 
 	/**
@@ -154,9 +158,10 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 				cpReq.enable();
 			}
 		} else {
-			// Adding a request to stop when the entrypoint end
+			// Adding a request to stop when the entry point end
 			// We make the assumption that we only go though the entry point one time
-			// TODO Maybe should also add an entryRequest to check if the method is called again so that we don't stop too early
+			// TODO Maybe should also add an entryRequest to check if the method is called
+			// again so that we don't stop too early
 			MethodExitRequest exitReq = vm.eventRequestManager().createMethodExitRequest();
 			exitReq.addClassFilter(config.getEntrypoint().getClassName());
 			exitReq.enable();
@@ -171,8 +176,7 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 
 					if (event instanceof StepEvent) {
 						this.reactToStepEvent((StepEvent) event);
-					}
-					else if (event instanceof MethodEntryEvent) {
+					} else if (event instanceof MethodEntryEvent) {
 						this.reactToMethodEntryEvent((MethodEntryEvent) event);
 					} else if (event instanceof MethodExitEvent) {
 						this.reactToMethodExitEvent((MethodExitEvent) event);
@@ -213,7 +217,6 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 		}
 	}
 
-
 	/**
 	 * Process all events of the main thread until the VM dies or disconnect
 	 * 
@@ -223,14 +226,28 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 		try {
 			this.processEventsUntil(null);
 		} catch (com.sun.jdi.VMDisconnectedException e) {
-		    System.err.println("VM disconnected, tracing stopped");
+			System.err.println("VM disconnected, tracing stopped");
 		}
 	}
 
+	/**
+	 * Create the TraceMethod associated to the frame, collecting values of receiver and arguments
+	 * @param frame the StackFrame of the TraceMethod
+	 */
 	protected void createMethodWith(StackFrame frame) {
+		this.createMethodWith(frame, true);
+	}
+	
+	/**
+	 * Create the TraceMethod associated to the frame, collecting or not the values of receiver and arguments
+	 * @param frame the StackFrame of the TraceMethod
+	 * @param collectValues, true if value should be collected, false otherwise
+	 */
+	protected void createMethodWith(StackFrame frame, boolean collectValues) {
 		Method method = frame.location().method();
 		ObjectReference receiver = frame.thisObject();
 		List<Value> argValues;
+		int newMethodId = jdiToTraceConverter.newTraceElementId();
 
 		try {
 			argValues = frame.getArgumentValues();
@@ -238,18 +255,38 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 			// Happens for native calls, and can't be obtained
 			argValues = null;
 		}
-
-		jdiToTraceConverter.newMethodFrom(method, argValues, receiver);
+		if (collectValues) {
+			jdiToTraceConverter.newMethodFrom(method, argValues, receiver, newMethodId, this.getParentId());
+		} else {
+			jdiToTraceConverter.newMethodFrom(method, newMethodId, this.getParentId());
+		}
+		this.pushParentId(newMethodId);
 	}
 
 	protected void serializeTrace() {
 		this.jdiToTraceConverter.serialize();
 	}
 
+	protected int popParentId() {
+		return this.branchIds.pop();
+	}
+
+	protected void pushParentId(int id) {
+		this.branchIds.push(id);
+	}
+
+	protected int getParentId() {
+		if (this.branchIds.empty()) {
+			// For the first method of the execution, we return a negative id, indicating it has no parent
+			return -1;
+		}
+		return this.branchIds.peek();
+	}
+
 	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event);
-	
+
 	protected abstract void reactToMethodExitEvent(MethodExitEvent event);
-                
+
 	protected abstract void reactToStepEvent(StepEvent event);
 
 }

@@ -42,7 +42,7 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 
 			// Fix for the first method being the main
 			StackFrame initialFrame = this.getThread().frame(0);
-			this.createMethodWith(initialFrame);
+			this.createMethodWith(initialFrame, config.collectValues());
 
 			frameCountBefore = 1;
 
@@ -78,7 +78,9 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			// PHASE 1 : Detections
 			// 1. Detect invocations
 			if (frameCountNow > frameCountBefore) {
-				this.createMethodWith(frame);
+				this.createMethodWith(frame, config.collectValues());
+			} else if(frameCountNow < frameCountBefore) {
+				this.popParentId();
 			}
 
 			// PHASE 2 : Update step policy
@@ -141,15 +143,6 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 		}
 
 		return true;
-	}
-
-	@Override
-	protected void createMethodWith(StackFrame frame) {
-		if (config.collectValues()) {
-			super.createMethodWith(frame);
-		} else {
-			this.jdiToTraceConverter.newMethodFrom(frame.location().method());
-		}
 	}
 
 	@Override

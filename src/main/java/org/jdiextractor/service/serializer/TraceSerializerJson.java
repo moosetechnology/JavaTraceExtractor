@@ -55,14 +55,27 @@ public class TraceSerializerJson extends TraceSerializer {
 
 	@Override
 	public void serialize(TraceElement element) {
-		if (nbElementLogged != 0) {
-			try {
-				writer.write(this.joinElementListing());
-			} catch (IOException e) {
-				e.printStackTrace();
+		try {
+			if (nbElementLogged != 0) {
+				try {
+					writer.write(this.joinElementListing());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
+
+			// Starting Element
+			writer.write(this.objectStart());
+			writer.write(quotes("id") + ":" + element.getId());
+			writer.write(this.joinElementListing());
+			writer.write(quotes("parentId") + ":" + element.getParentId());
+			writer.write(this.joinElementListing());
+			element.acceptSerializer(this);
+			// Closing Element
+			writer.write(this.objectEnd());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		element.acceptSerializer(this);
 		this.nbElementLogged++;
 	}
 
@@ -82,7 +95,7 @@ public class TraceSerializerJson extends TraceSerializer {
 	public void serialize(Trace trace) {
 		this.startSerialize();
 		Iterator<TraceElement> ite = trace.getElements().iterator();
-		while (ite.hasNext()) {
+		while (ite.hasNext()) {	
 			ite.next().acceptSerializer(this);
 		}
 		this.endSerialize();
@@ -131,8 +144,6 @@ public class TraceSerializerJson extends TraceSerializer {
 		// BECAUSE THE MOOSE IMPORTER NEED THIS EXACT ORDER TO IMPORT ALREADY FOUND
 		// REFERENCES
 		try {
-			// Starting Element
-			writer.write(this.objectStart());
 
 			writer.write(quotes("method") + ":");
 			// Starting Method
@@ -215,8 +226,6 @@ public class TraceSerializerJson extends TraceSerializer {
 			} else {
 				traceMethod.getReceiver().acceptSerializer(this);
 			}
-			// Closing Element
-			writer.write(this.objectEnd());
 
 		} catch (IOException e) {
 			e.printStackTrace();

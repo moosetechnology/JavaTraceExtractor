@@ -58,11 +58,14 @@ public abstract class JDIToTraceConverter {
 	 * All already visited object references
 	 */
 	private Set<Long> visitedIds = new HashSet<>();
+	
+	protected int lastTraceElementId;
 
 	public JDIToTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceLogger logger) {
 		this.valuesIndependents = valuesIndependents;
 		this.maxObjectDepth = maxObjectDepth;
 		this.logger = logger;
+		this.lastTraceElementId = 0;
 	}
 
 	protected abstract void addElement(TraceElement element);
@@ -71,8 +74,12 @@ public abstract class JDIToTraceConverter {
 
 	public abstract void removeLastElement();
 
-	public TraceMethod newMethodFrom(Method method, List<Value> argumentValues, ObjectReference receiverObject) {
-		TraceMethod traceMethod = this.coreNewMethodFrom(method);
+	public int newTraceElementId() {
+		return this.lastTraceElementId++;
+	}
+
+	public TraceMethod newMethodFrom(Method method, List<Value> argumentValues, ObjectReference receiverObject, int id, int parentId) {
+		TraceMethod traceMethod = this.coreNewMethodFrom(method, id, parentId);
 
 		if (argumentValues == null) {
 			traceMethod.setArgumentAccessible(false);
@@ -94,19 +101,21 @@ public abstract class JDIToTraceConverter {
 		return traceMethod;
 	}
 
-	public TraceMethod newMethodFrom(Method method) {
-		TraceMethod traceMethod = this.coreNewMethodFrom(method);
+	public TraceMethod newMethodFrom(Method method, int id, int parentId) {
+		TraceMethod traceMethod = this.coreNewMethodFrom(method,id, parentId);
 
 		this.addElement(traceMethod);
 		return traceMethod;
 	}
 
-	private TraceMethod coreNewMethodFrom(Method method) {
+	private TraceMethod coreNewMethodFrom(Method method, int id, int parentId) {
 		if (valuesIndependents) {
 			visitedIds = new HashSet<>();
 		}
 
 		TraceMethod traceMethod = new TraceMethod();
+		traceMethod.setId(id);
+		traceMethod.setParentId(parentId);
 		traceMethod.setName(method.name());
 		traceMethod.setSignature(this.signatureParameter(method));
 		traceMethod.setClassSide(method.isStatic());
