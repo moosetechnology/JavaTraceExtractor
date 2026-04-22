@@ -10,7 +10,7 @@ import jdiextractor.service.breakpoint.BreakpointWrapper;
 import jdiextractor.service.serializer.BufferedTraceConverter;
 import jdiextractor.service.serializer.DefferedTraceConverter;
 import jdiextractor.service.serializer.JDIToTraceConverter;
-import jdiextractor.service.serializer.TraceLogger;
+import jdiextractor.service.serializer.TraceSerializerJson;
 import jdiextractor.tracemodel.entities.Trace;
 
 import com.sun.jdi.IncompatibleThreadStateException;
@@ -66,13 +66,13 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	 * Whether the values are independents between all element of the trace or not
 	 */
 	protected boolean valuesIndependents;
-	
+
 	/**
-	 * Does the extractor log or retain all element in a model
-	 * It is useful for testing
+	 * Does the extractor log or retain all element in a model It is useful for
+	 * testing
 	 */
 	protected boolean activateLogging;
-	
+
 	protected Stack<Integer> branchIds;
 
 	/**
@@ -105,7 +105,7 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 		this.activateLogging = activateLogging;
 		this.branchIds = new Stack<Integer>();
 	}
-	
+
 	public Trace getTrace() {
 		return this.jdiToTraceConverter.getTrace();
 	}
@@ -128,11 +128,13 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	}
 
 	protected void createTracePopulator() {
-		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
+		TraceSerializerJson serializer = new TraceSerializerJson(config.getLogging(), this.valuesIndependents);
 		if (activateLogging) {
-			this.jdiToTraceConverter = new BufferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
+			this.jdiToTraceConverter = new BufferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(),
+					serializer);
 		} else {
-			this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
+			this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(),
+					serializer);
 		}
 	}
 
@@ -259,16 +261,20 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	}
 
 	/**
-	 * Create the TraceMethod associated to the frame, collecting values of receiver and arguments
+	 * Create the TraceMethod associated to the frame, collecting values of receiver
+	 * and arguments
+	 * 
 	 * @param frame the StackFrame of the TraceMethod
 	 */
 	protected void createMethodWith(StackFrame frame) {
 		this.createMethodWith(frame, true);
 	}
-	
+
 	/**
-	 * Create the TraceMethod associated to the frame, collecting or not the values of receiver and arguments
-	 * @param frame the StackFrame of the TraceMethod
+	 * Create the TraceMethod associated to the frame, collecting or not the values
+	 * of receiver and arguments
+	 * 
+	 * @param frame          the StackFrame of the TraceMethod
 	 * @param collectValues, true if value should be collected, false otherwise
 	 */
 	protected void createMethodWith(StackFrame frame, boolean collectValues) {
@@ -307,7 +313,8 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 
 	protected int getParentId() {
 		if (this.branchIds.empty()) {
-			// For the first method of the execution, we return a negative id, indicating it has no parent
+			// For the first method of the execution, we return a negative id, indicating it
+			// has no parent
 			return -1;
 		}
 		return this.branchIds.peek();

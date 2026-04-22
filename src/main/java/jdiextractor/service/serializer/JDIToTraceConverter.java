@@ -53,7 +53,7 @@ public abstract class JDIToTraceConverter {
 	/**
 	 * The logger used when the trace population is finished
 	 */
-	protected TraceLogger logger;
+	protected TraceSerializer serilizer;
 
 	/**
 	 * All already visited object references
@@ -62,10 +62,10 @@ public abstract class JDIToTraceConverter {
 	
 	protected int lastTraceElementId;
 
-	public JDIToTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceLogger logger) {
+	public JDIToTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceSerializer serializer) {
 		this.valuesIndependents = valuesIndependents;
 		this.maxObjectDepth = maxObjectDepth;
-		this.logger = logger;
+		this.serilizer = serializer;
 		this.lastTraceElementId = 0;
 	}
 
