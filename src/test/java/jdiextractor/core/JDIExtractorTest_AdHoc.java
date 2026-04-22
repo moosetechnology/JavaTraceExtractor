@@ -46,10 +46,6 @@ public class JDIExtractorTest_AdHoc {
 		try {
 			process = builder.start();
 
-			// Tactical delay to allow the OS to bind port 5006 before attaching.
-			// Ideally, this should be replaced by a polling/retry loop inside JDIAttach.
-			Thread.sleep(500);
-
 			vm = (new JDIAttach()).attachToJDI(config.getVm());
 		} catch (Exception e) {
 			fail("Failed to start or attach to target JVM: " + e.getMessage());
@@ -83,19 +79,19 @@ public class JDIExtractorTest_AdHoc {
 						List.of("java.util.List", "int"), 0))
 				.build();
 		this.startTargetJVM("dummies.ObjectArgsSimulation", config);
-		
+
 		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
 		extractor.launch(vm, config);
-		
+
 		Trace trace = extractor.getTrace();
-		
+
 		TraceMethod endpoint = (TraceMethod) trace.getElements().get(1);
 		assertNotNull(endpoint);
-		
-		assertEquals(2,endpoint.getParameters().size());
-		
+
+		assertEquals(2, endpoint.getParameters().size());
+
 		assertTrue(endpoint.getArguments().get(0).getValue() instanceof TraceClassReference);
 		assertTrue(endpoint.getArguments().get(1).getValue() instanceof TracePrimitiveValue);
 	}
-	
+
 }

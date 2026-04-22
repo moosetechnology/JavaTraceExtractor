@@ -4,9 +4,6 @@ import java.util.List;
 
 import jdiextractor.config.TraceExtractorStepConfig;
 import jdiextractor.config.components.BreakpointConfig;
-import jdiextractor.service.serializer.TraceLogger;
-import jdiextractor.service.serializer.BufferedTraceConverter;
-
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.Method;
 import com.sun.jdi.StackFrame;

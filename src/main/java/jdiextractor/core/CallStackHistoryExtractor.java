@@ -1,8 +1,6 @@
 package jdiextractor.core;
 
 import jdiextractor.config.CallStackHistoryExtractorConfig;
-import jdiextractor.service.serializer.DefferedTraceConverter;
-import jdiextractor.service.serializer.TraceLogger;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.MethodEntryEvent;
