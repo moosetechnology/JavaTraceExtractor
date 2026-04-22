@@ -204,5 +204,32 @@ public class JDIExtractorTest_AdHoc {
 
 		assertEquals(2, actualAge2);
 	}
+	
+	/**
+	 * This test explicitly represent that enum and enum values are represented as any class would
+	 * Meaning that JavaTraceExtractor does not understand what an enum is, but directly represent how an enum really work
+	 * To understand what really is an enum you can read this https://stackoverflow.com/questions/29139633/java-class-equivalent-for-an-enum 
+	 * or this https://dev.to/satyam_gupta_0d1ff2152dcc/java-enums-explained-beyond-basic-constants-a84
+	 */
+	@Test
+	public void testEnumRepresentation() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.EnumValues", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.EnumValues", "endpoint", List.of("dummies.EnumValues$Animal"), 0))
+				.build();
+		this.startTargetJVM("dummies.EnumValues", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+
+		Trace trace = extractor.getTrace();
+
+		TraceMethod endpoint = (TraceMethod) trace.getElements().get(1);
+		
+		assertEquals(1,endpoint.getArguments().size());
+		assertTrue(endpoint.getArguments().get(0).getValue() instanceof TraceClassReference);
+	}
+	
+	
 
 }
