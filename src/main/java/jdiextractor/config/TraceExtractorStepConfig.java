@@ -39,7 +39,7 @@ public class TraceExtractorStepConfig extends AbstractExtractorConfig {
 		return config;
 	}
 
-	public TraceExtractorStepConfigBuilder builder() {
+	public static TraceExtractorStepConfigBuilder builder() {
 		return new TraceExtractorStepConfigBuilder();
 	}
 

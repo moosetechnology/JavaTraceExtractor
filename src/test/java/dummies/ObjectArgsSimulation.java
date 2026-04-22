@@ -15,5 +15,6 @@ public class ObjectArgsSimulation {
 	}
 
 	public static void endpoint(List<String> l, int i) {}
+	
 
 }

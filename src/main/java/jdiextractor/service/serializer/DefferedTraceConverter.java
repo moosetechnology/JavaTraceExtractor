@@ -3,6 +3,10 @@ package jdiextractor.service.serializer;
 import jdiextractor.tracemodel.entities.Trace;
 import jdiextractor.tracemodel.entities.TraceElement;
 
+/**
+ * A Trace converter that retain TraceElements and serialize the Trace only at the end
+ * It enable the analysis and verification of obtained Traces directly in java
+ */
 public class DefferedTraceConverter extends JDIToTraceConverter {
 
 	private Trace trace;
@@ -25,6 +29,11 @@ public class DefferedTraceConverter extends JDIToTraceConverter {
 	@Override
 	public void removeLastElement() {
 		this.trace.removeLastElement();
+	}
+
+	@Override
+	public Trace getTrace() {
+		return this.trace;
 	}
 
 }

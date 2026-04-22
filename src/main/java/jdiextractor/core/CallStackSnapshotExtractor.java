@@ -24,6 +24,10 @@ public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnaps
 	public CallStackSnapshotExtractor() {
 		super(false);
 	}
+	
+	public CallStackSnapshotExtractor(boolean activateLogging) {
+		super(false,activateLogging);
+	}
 
 	@Override
 	protected void executeExtraction() {

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import jdiextractor.tracemodel.entities.Trace;
 import jdiextractor.tracemodel.entities.TraceArgument;
 import jdiextractor.tracemodel.entities.TraceElement;
 import jdiextractor.tracemodel.entities.TraceMethod;
@@ -73,6 +74,8 @@ public abstract class JDIToTraceConverter {
 	public abstract void serialize();
 
 	public abstract void removeLastElement();
+	
+	public abstract Trace getTrace();
 
 	public int newTraceElementId() {
 		return this.lastTraceElementId++;

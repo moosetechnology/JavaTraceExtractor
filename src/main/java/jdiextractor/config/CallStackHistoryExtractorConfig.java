@@ -2,7 +2,6 @@ package jdiextractor.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import jdiextractor.config.builder.AbstractExtractorConfigBuilder;
 import jdiextractor.config.builder.CallStackHistoryExtractorConfigBuilder;
 import jdiextractor.config.components.BreakpointConfig;
 import jdiextractor.config.components.LoggingConfig;
@@ -19,13 +18,14 @@ public class CallStackHistoryExtractorConfig extends AbstractExtractorConfig {
 		super();
 	}
 
+
 	public static CallStackHistoryExtractorConfig fromJson(JsonNode rootNode) {
 		CallStackHistoryExtractorConfig config = new CallStackHistoryExtractorConfig();
 		config.fillFromJson(rootNode);
 		return config;
 	}
 	
-	public AbstractExtractorConfigBuilder<CallStackHistoryExtractorConfigBuilder, CallStackHistoryExtractorConfig> builder() {
+	public static CallStackHistoryExtractorConfigBuilder builder() {
 		return new CallStackHistoryExtractorConfigBuilder();
 	}
 
