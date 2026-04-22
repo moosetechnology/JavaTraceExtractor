@@ -35,12 +35,6 @@ public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistor
 			throw new IllegalStateException("Thread should be at a breakpoint but isn't");
 		}
 	}
-	
-	@Override
-	protected void createTracePopulator() {
-		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
-		this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
-	}
 
 	/**
 	 * Blocks execution until the configured breakpoint is hit. Handles

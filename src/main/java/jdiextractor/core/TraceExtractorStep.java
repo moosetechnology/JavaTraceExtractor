@@ -145,12 +145,6 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 		return true;
 	}
 
-	@Override
-	protected void createTracePopulator() {
-		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
-		this.jdiToTraceConverter = new BufferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
-	}
-
 	private void ensureStepOver() {
 		if (!stepOver.isEnabled()) {
 			stepInto.disable();
