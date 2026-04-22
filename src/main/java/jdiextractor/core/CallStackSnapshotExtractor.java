@@ -3,9 +3,6 @@ package jdiextractor.core;
 import java.util.List;
 
 import jdiextractor.config.CallStackSnapshotExtractorConfig;
-import jdiextractor.service.serializer.DefferedTraceConverter;
-import jdiextractor.service.serializer.TraceLogger;
-
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.event.MethodEntryEvent;
