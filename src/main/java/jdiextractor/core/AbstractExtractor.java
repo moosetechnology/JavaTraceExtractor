@@ -130,13 +130,19 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	protected void createTracePopulator() {
 		TraceSerializerJson serializer = new TraceSerializerJson(config.getLogging(), this.valuesIndependents);
 		if (activateLogging) {
-			this.jdiToTraceConverter = new BufferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(),
+			this.jdiToTraceConverter = this.defaultTraceConverter(valuesIndependents, config.getObjectMaxDepth(),
 					serializer);
 		} else {
 			this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(),
 					serializer);
 		}
 	}
+
+	protected JDIToTraceConverter defaultTraceConverter(boolean valuesIndependents, int objectMaxDepth,
+			TraceSerializerJson serializer) {
+		return new BufferedTraceConverter(valuesIndependents,objectMaxDepth, serializer);
+	}
+
 
 	/**
 	 * Returns the thread where the execution to extract takes place

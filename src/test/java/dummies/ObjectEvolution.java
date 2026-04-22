@@ -1,8 +1,5 @@
 package dummies;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Offer a chain of methods modifying an object in multiple steps Help check if
  * the model extracted can follow the evolution of the object or just take the last version of it

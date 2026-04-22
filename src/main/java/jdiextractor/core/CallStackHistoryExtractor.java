@@ -1,6 +1,10 @@
 package jdiextractor.core;
 
 import jdiextractor.config.CallStackHistoryExtractorConfig;
+import jdiextractor.service.serializer.DefferedTraceConverter;
+import jdiextractor.service.serializer.JDIToTraceConverter;
+import jdiextractor.service.serializer.TraceSerializerJson;
+
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.MethodEntryEvent;
@@ -80,6 +84,13 @@ public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistor
 	@Override
 	protected void reactToMethodExitEvent(MethodExitEvent event) {
 		// Nothing, should not happen in this scenario
+	}
+
+	@Override
+	protected JDIToTraceConverter defaultTraceConverter(boolean valuesIndependents, int objectMaxDepth,
+			TraceSerializerJson serializer) {
+		// Cannot use the Buffered converter because this extractor will remove element from the trace during execution
+		return new DefferedTraceConverter(valuesIndependents,objectMaxDepth, serializer);
 	}
 
 }
