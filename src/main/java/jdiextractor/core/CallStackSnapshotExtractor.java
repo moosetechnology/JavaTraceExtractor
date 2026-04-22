@@ -63,12 +63,6 @@ public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnaps
 	}
 
 	@Override
-	protected void createTracePopulator() {
-		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
-		this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
-	}
-
-	@Override
 	protected void reactToMethodExitEvent(MethodExitEvent event) {
 		// Nothing, should not happen in this scenario
 	}

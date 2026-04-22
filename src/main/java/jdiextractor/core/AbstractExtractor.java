@@ -7,7 +7,10 @@ import jdiextractor.config.AbstractExtractorConfig;
 import jdiextractor.config.components.BreakpointConfig;
 import jdiextractor.service.breakpoint.BreakPointInstaller;
 import jdiextractor.service.breakpoint.BreakpointWrapper;
+import jdiextractor.service.serializer.BufferedTraceConverter;
+import jdiextractor.service.serializer.DefferedTraceConverter;
 import jdiextractor.service.serializer.JDIToTraceConverter;
+import jdiextractor.service.serializer.TraceLogger;
 import jdiextractor.tracemodel.entities.Trace;
 
 import com.sun.jdi.IncompatibleThreadStateException;
@@ -124,7 +127,14 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 		this.vm = vm;
 	}
 
-	protected abstract void createTracePopulator();
+	protected void createTracePopulator() {
+		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
+		if (activateLogging) {
+			this.jdiToTraceConverter = new BufferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
+		} else {
+			this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
+		}
+	}
 
 	/**
 	 * Returns the thread where the execution to extract takes place

@@ -1,6 +1,6 @@
 package jdiextractor.core;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.List;
@@ -14,6 +14,10 @@ import jdiextractor.config.AbstractExtractorConfig;
 import jdiextractor.config.CallStackSnapshotExtractorConfig;
 import jdiextractor.config.components.BreakpointConfig;
 import jdiextractor.service.connector.JDIAttach;
+import jdiextractor.tracemodel.entities.Trace;
+import jdiextractor.tracemodel.entities.TraceMethod;
+import jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
+import jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
 
 public class JDIExtractorTest_AdHoc {
 
@@ -72,18 +76,26 @@ public class JDIExtractorTest_AdHoc {
 
 	@Test
 	public void testMethodArgumentCanReferencesAndPrimitiveTypes() {
-		AbstractExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
 				.entrypoint(
 						new BreakpointConfig("dummies.ObjectArgsSimulation", "main", List.of("java.lang.String[]"), 0))
 				.endpoint(new BreakpointConfig("dummies.ObjectArgsSimulation", "endpoint",
-						List.of("java.lang.String[]", "int"), 0))
+						List.of("java.util.List", "int"), 0))
 				.build();
 		this.startTargetJVM("dummies.ObjectArgsSimulation", config);
 		
 		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
 		
-		fail();
-		//TODO
-
+		Trace trace = extractor.getTrace();
+		
+		TraceMethod endpoint = (TraceMethod) trace.getElements().get(1);
+		assertNotNull(endpoint);
+		
+		assertEquals(2,endpoint.getParameters().size());
+		
+		assertTrue(endpoint.getArguments().get(0).getValue() instanceof TraceClassReference);
+		assertTrue(endpoint.getArguments().get(1).getValue() instanceof TracePrimitiveValue);
 	}
+	
 }
