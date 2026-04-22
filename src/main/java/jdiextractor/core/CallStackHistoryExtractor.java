@@ -17,10 +17,14 @@ import com.sun.jdi.request.StepRequest;
  */
 public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistoryExtractorConfig> {
 	
-	private int frameCount = 0;
+	private int frameCountBefore = 0;
 
 	public CallStackHistoryExtractor() {
 		super(true);
+	}
+
+	public CallStackHistoryExtractor(boolean activateLogging) {
+		super(true,activateLogging);
 	}
 
 	@Override
@@ -54,14 +58,14 @@ public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistor
 	protected void reactToStepEvent(StepEvent event) {
 		try {
 			ThreadReference targetThread = event.thread();
-			frameCount = targetThread.frameCount();
+			int frameCountNow = targetThread.frameCount();
 
-			if (frameCount + 1 == frameCount) {
+			if (frameCountBefore + 1 == frameCountNow) {
 				this.createMethodWith(targetThread.frame(0));
-				frameCount++;
-			} else if (frameCount - 1 == frameCount) {
+				frameCountBefore++;
+			} else if (frameCountBefore - 1 == frameCountNow) {
 				this.jdiToTraceConverter.removeLastElement();
-				frameCount--;
+				frameCountBefore--;
 			}
 		} catch (IncompatibleThreadStateException e) {
 			throw new IllegalStateException("Exception occured during a step event : " + e);
