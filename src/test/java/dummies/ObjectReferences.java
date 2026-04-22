@@ -8,7 +8,7 @@ import java.util.List;
  * Create simple call stack for the JDIAttach when putting a breakpoint on java.lang.Runtime.exec(java.lang.String). 
  * This simulation demonstrate the fact that if an object is modified in a later stack frame, previous frames will also have theses changes.
  */
-public class ObjectRefSimulation {
+public class ObjectReferences {
 
 	public static void main(String[] args) {
 		List<String> l = new ArrayList<>();

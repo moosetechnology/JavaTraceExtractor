@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.List;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.sun.jdi.VirtualMachine;
@@ -18,6 +19,7 @@ import jdiextractor.tracemodel.entities.Trace;
 import jdiextractor.tracemodel.entities.TraceMethod;
 import jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
 import jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
+import jdiextractor.tracemodel.entities.traceValues.TraceStringReference;
 
 public class JDIExtractorTest_AdHoc {
 
@@ -73,12 +75,11 @@ public class JDIExtractorTest_AdHoc {
 	@Test
 	public void testMethodArgumentCanReferencesAndPrimitiveTypes() {
 		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
-				.entrypoint(
-						new BreakpointConfig("dummies.ObjectArgsSimulation", "main", List.of("java.lang.String[]"), 0))
-				.endpoint(new BreakpointConfig("dummies.ObjectArgsSimulation", "endpoint",
-						List.of("java.util.List", "int"), 0))
+				.entrypoint(new BreakpointConfig("dummies.ObjectArgsTypes", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ObjectArgsTypes", "endpoint", List.of("java.util.List", "int"),
+						0))
 				.build();
-		this.startTargetJVM("dummies.ObjectArgsSimulation", config);
+		this.startTargetJVM("dummies.ObjectArgsTypes", config);
 
 		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
 		extractor.launch(vm, config);
@@ -92,6 +93,32 @@ public class JDIExtractorTest_AdHoc {
 
 		assertTrue(endpoint.getArguments().get(0).getValue() instanceof TraceClassReference);
 		assertTrue(endpoint.getArguments().get(1).getValue() instanceof TracePrimitiveValue);
+	}
+
+	/**
+	 * This test is ignored because we deactivated the extraction of String values.
+	 * It causes a parsing error when handling specific attack payloads 
+	 * (e.g., CommonsCollection1 from ysoserial).
+	 * * @see jdiextractor.core.JDIToTraceConverter#newStringReferenceFrom(com.sun.jdi.StringReference)
+	 */
+	@Test
+	@Ignore("Deactivated: String parsing error on ysoserial payloads. Check JDIToTraceConverter.")
+	public void testStringValue() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.StringValues", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.StringValues", "endpoint", List.of("java.lang.String"), 0))
+				.build();
+		this.startTargetJVM("dummies.StringValues", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+
+		Trace trace = extractor.getTrace();
+
+		TraceMethod endpoint = (TraceMethod) trace.getElements().get(1);
+		assertNotNull(endpoint);
+
+		assertEquals("toto", ((TraceStringReference) endpoint.getArguments().get(0).getValue()).getValue());
 	}
 
 }
