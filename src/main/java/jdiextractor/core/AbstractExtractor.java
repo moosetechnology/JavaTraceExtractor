@@ -8,6 +8,7 @@ import jdiextractor.config.components.BreakpointConfig;
 import jdiextractor.service.breakpoint.BreakPointInstaller;
 import jdiextractor.service.breakpoint.BreakpointWrapper;
 import jdiextractor.service.serializer.JDIToTraceConverter;
+import jdiextractor.tracemodel.entities.Trace;
 
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.InternalException;
@@ -62,7 +63,13 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	 * Whether the values are independents between all element of the trace or not
 	 */
 	protected boolean valuesIndependents;
-
+	
+	/**
+	 * Does the extractor log or retain all element in a model
+	 * It is useful for testing
+	 */
+	protected boolean activateLogging;
+	
 	protected Stack<Integer> branchIds;
 
 	/**
@@ -86,7 +93,18 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	 */
 	protected AbstractExtractor(boolean valuesIndependents) {
 		this.valuesIndependents = valuesIndependents;
+		this.activateLogging = true;
 		this.branchIds = new Stack<Integer>();
+	}
+
+	public AbstractExtractor(boolean valuesIndependents, boolean activateLogging) {
+		this.valuesIndependents = valuesIndependents;
+		this.activateLogging = activateLogging;
+		this.branchIds = new Stack<Integer>();
+	}
+	
+	public Trace getTrace() {
+		return this.jdiToTraceConverter.getTrace();
 	}
 
 	/**
@@ -264,7 +282,9 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	}
 
 	protected void serializeTrace() {
-		this.jdiToTraceConverter.serialize();
+		if (activateLogging) {
+			this.jdiToTraceConverter.serialize();
+		}
 	}
 
 	protected int popParentId() {

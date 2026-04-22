@@ -4,7 +4,7 @@
 		"port": "5006"
 	},
 	"entrypoint": {
-		"className": "com.example.ObjectRefSimulation",
+		"className": "dummies.ObjectArgsSimulation",
 		"methodName": "main",
 		"methodArguments": [
 			"java.lang.String[]"
@@ -12,18 +12,19 @@
 		"repBefore": 0
 	},
 	"endpoint": {
-		"className": "java.lang.Runtime",
-		"methodName": "exec",
+		"className": "dummies.ObjectArgsSimulation",
+		"methodName": "endpoint",
 		"methodArguments": [
-			"java.lang.String"
+			"java.util.List",
+			"int"
 		],
 		"repBefore": 0
 	},
 	"activateEndpoint" : false,
 	"collectValues" : true,
-	"maxObjectDepth" : 14,
-	"maxMethodDepth" : 21,
-	"maxSteps" : -1,
+	"maxObjectDepth" : 1,
+	"maxMethodDepth" : 23,
+	"maxSteps" : 10000,
 	"logging": {
 		"outputName" : "JDIOutput",
 		"extension": "tr"

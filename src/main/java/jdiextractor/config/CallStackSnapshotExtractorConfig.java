@@ -24,7 +24,7 @@ public class CallStackSnapshotExtractorConfig extends AbstractExtractorConfig {
 		return config;
 	}
 
-	public CallStackSnapshotExtractorConfigBuilder builder() {
+	public static CallStackSnapshotExtractorConfigBuilder builder() {
 		return new CallStackSnapshotExtractorConfigBuilder();
 	}
 

@@ -3,16 +3,16 @@ package jdiextractor.core;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Test;
 
 import com.sun.jdi.VirtualMachine;
-import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 
 import jdiextractor.config.AbstractExtractorConfig;
 import jdiextractor.config.CallStackSnapshotExtractorConfig;
+import jdiextractor.config.components.BreakpointConfig;
 import jdiextractor.service.connector.JDIAttach;
 
 public class JDIExtractorTest_AdHoc {
@@ -30,7 +30,8 @@ public class JDIExtractorTest_AdHoc {
 		String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
 		String currentClasspath = System.getProperty("java.class.path");
 
-		// The hardcoded port 5006 must strictly match the configuration in config.getVm()
+		// The hardcoded port 5006 must strictly match the configuration in
+		// config.getVm()
 		ProcessBuilder builder = new ProcessBuilder(javaBin,
 				"-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006", "-cp", currentClasspath,
 				className);
@@ -71,8 +72,18 @@ public class JDIExtractorTest_AdHoc {
 
 	@Test
 	public void testMethodArgumentCanReferencesAndPrimitiveTypes() {
-		AbstractExtractorConfig config = CallStackSnapshotExtractorConfig.builder().build();
-		this.startTargetJVM("dummies.ObjectRefSimulation", config);
+		AbstractExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(
+						new BreakpointConfig("dummies.ObjectArgsSimulation", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ObjectArgsSimulation", "endpoint",
+						List.of("java.lang.String[]", "int"), 0))
+				.build();
+		this.startTargetJVM("dummies.ObjectArgsSimulation", config);
+		
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		
+		fail();
+		//TODO
 
 	}
 }
