@@ -10,19 +10,19 @@ import jdiextractor.tracemodel.entities.TraceElement;
 public class BufferedTraceConverter extends JDIToTraceConverter {
 
 
-	public BufferedTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceLogger logger) {
-		super(valuesIndependents, maxObjectDepth, logger);
-		logger.startSerialize();
+	public BufferedTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceSerializer serializer) {
+		super(valuesIndependents, maxObjectDepth, serializer);
+		serializer.startSerialize();
 	}
 
 	@Override
 	protected void addElement(TraceElement element) {
-		logger.serialize(element);
+		serilizer.serialize(element);
 	}
 
 	@Override
 	public void serialize() {
-		logger.endSerialize();
+		serilizer.endSerialize();
 	}
 
 	@Override

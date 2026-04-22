@@ -11,8 +11,8 @@ public class DefferedTraceConverter extends JDIToTraceConverter {
 
 	private Trace trace;
 
-	public DefferedTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceLogger logger) {
-		super(valuesIndependents, maxObjectDepth, logger);
+	public DefferedTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceSerializer serilizer) {
+		super(valuesIndependents, maxObjectDepth, serilizer);
 		this.trace = new Trace();
 	}
 
@@ -23,7 +23,7 @@ public class DefferedTraceConverter extends JDIToTraceConverter {
 
 	@Override
 	public void serialize() {
-		logger.serialize(trace);
+		serilizer.serialize(trace);
 	}
 
 	@Override

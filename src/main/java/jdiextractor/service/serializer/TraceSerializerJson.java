@@ -1,9 +1,11 @@
 package jdiextractor.service.serializer;
 
 import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
 
+import jdiextractor.config.components.LoggingConfig;
 import jdiextractor.tracemodel.entities.Trace;
 import jdiextractor.tracemodel.entities.TraceArgument;
 import jdiextractor.tracemodel.entities.TraceAssignation;
@@ -28,18 +30,27 @@ import jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
 
 public class TraceSerializerJson extends TraceSerializer {
 
+	private LoggingConfig loggingConfig;
+
 	private BufferedWriter writer;
 	private boolean valueIndependents;
 	private int nbElementLogged;
 
-	public TraceSerializerJson(BufferedWriter writer, boolean valueIndependents) {
-		this.writer = writer;
+	public TraceSerializerJson(LoggingConfig loggingConfig, boolean valueIndependents) {
 		this.valueIndependents = valueIndependents;
+		this.loggingConfig = loggingConfig;
 		this.nbElementLogged = 0;
 	}
 
 	@Override
 	public void startSerialize() {
+		String fileName = this.loggingConfig.getOutputName() + "." + this.loggingConfig.getExtension();
+		try {
+			this.writer = new BufferedWriter(new FileWriter(fileName));
+		} catch (IOException e) {
+			throw new RuntimeException("Cannot open a file writer on the file: " + fileName);
+		}
+		
 		try {
 			writer.write(this.objectStart());
 
@@ -95,7 +106,7 @@ public class TraceSerializerJson extends TraceSerializer {
 	public void serialize(Trace trace) {
 		this.startSerialize();
 		Iterator<TraceElement> ite = trace.getElements().iterator();
-		while (ite.hasNext()) {	
+		while (ite.hasNext()) {
 			ite.next().acceptSerializer(this);
 		}
 		this.endSerialize();
