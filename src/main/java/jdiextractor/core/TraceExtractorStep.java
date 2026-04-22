@@ -29,6 +29,10 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 		super(true);
 	}
 
+	public TraceExtractorStep(boolean activateLogging) {
+		super(true, activateLogging);
+	}
+
 	@Override
 	protected void executeExtraction() {
 
@@ -76,7 +80,7 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			// 1. Detect invocations
 			if (frameCountNow > frameCountBefore) {
 				this.createMethodWith(frame, config.collectValues());
-			} else if(frameCountNow < frameCountBefore) {
+			} else if (frameCountNow < frameCountBefore) {
 				this.popParentId();
 			}
 
@@ -86,7 +90,7 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			} else {
 				this.ensureStepInto();
 			}
-			
+
 			if (this.maxStepsAttained()) {
 				this.desactivateSteps();
 			}

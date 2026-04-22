@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Ignore;
@@ -12,14 +13,17 @@ import org.junit.Test;
 import com.sun.jdi.VirtualMachine;
 
 import jdiextractor.config.AbstractExtractorConfig;
+import jdiextractor.config.CallStackHistoryExtractorConfig;
 import jdiextractor.config.CallStackSnapshotExtractorConfig;
 import jdiextractor.config.components.BreakpointConfig;
 import jdiextractor.service.connector.JDIAttach;
 import jdiextractor.tracemodel.entities.Trace;
 import jdiextractor.tracemodel.entities.TraceMethod;
 import jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
+import jdiextractor.tracemodel.entities.traceValues.TraceField;
 import jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
 import jdiextractor.tracemodel.entities.traceValues.TraceStringReference;
+import jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
 
 public class JDIExtractorTest_AdHoc {
 
@@ -72,6 +76,17 @@ public class JDIExtractorTest_AdHoc {
 		}
 	}
 
+	/**
+	 * Utility method that collect the field of a given name in a class reference
+	 */
+	public TraceField getFieldNamed(TraceClassReference classRef, String fieldName) {
+		Optional<TraceField> optionalField = classRef.getFields().stream().filter((field) -> field.getName().equals(fieldName)).findAny();
+		if(optionalField.isEmpty()) {
+			throw new RuntimeException("Given field name does not exist in the given class");
+		}
+		return optionalField.get();
+	}
+
 	@Test
 	public void testMethodArgumentCanReferencesAndPrimitiveTypes() {
 		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
@@ -97,9 +112,9 @@ public class JDIExtractorTest_AdHoc {
 
 	/**
 	 * This test is ignored because we deactivated the extraction of String values.
-	 * It causes a parsing error when handling specific attack payloads 
-	 * (e.g., CommonsCollection1 from ysoserial).
-	 * * @see jdiextractor.core.JDIToTraceConverter#newStringReferenceFrom(com.sun.jdi.StringReference)
+	 * It causes a parsing error when handling specific attack payloads (e.g.,
+	 * CommonsCollection1 from ysoserial). * @see
+	 * jdiextractor.core.JDIToTraceConverter#newStringReferenceFrom(com.sun.jdi.StringReference)
 	 */
 	@Test
 	@Ignore("Deactivated: String parsing error on ysoserial payloads. Check JDIToTraceConverter.")
@@ -119,6 +134,75 @@ public class JDIExtractorTest_AdHoc {
 		assertNotNull(endpoint);
 
 		assertEquals("toto", ((TraceStringReference) endpoint.getArguments().get(0).getValue()).getValue());
+	}
+
+	@Test
+	public void testCallStackSnapshotOnlyGetLastVersionOfObject() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ObjectEvolution", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ObjectEvolution", "endpoint", List.of("dummies.ObjectEvolution$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.ObjectEvolution", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+
+		Trace trace = extractor.getTrace();
+
+		// At first, the dog has the attribute age set at 1, but the snapshot took the last version and see the age of 2
+		TraceMethod changeAge = (TraceMethod) trace.getElements().get(1);
+		assertNotNull(changeAge);
+		assertEquals("changeAge", changeAge.getName());
+		
+		TraceClassReference dogReference = (TraceClassReference) changeAge.getArguments().get(0).getValue();
+		Object rawAge1 = ((TracePrimitiveValue) getFieldNamed(dogReference, "age").getValue()).getValue();
+		int actualAge1 = ((com.sun.jdi.IntegerValue) rawAge1).value();
+
+		assertEquals(2, actualAge1);
+		
+		// At the last method, we have the dog again, but we got a TraceValueAlreadyFound
+		TraceMethod endpoint = (TraceMethod) trace.getElements().get(2);
+		assertNotNull(endpoint);
+		assertEquals("endpoint", endpoint.getName());
+		
+		TraceValueAlreadyFound alreadyFoundDog = (TraceValueAlreadyFound) endpoint.getArguments().get(0).getValue();
+
+		// Checking that the already found variable is really the dog
+		assertEquals(dogReference.getUniqueID(),alreadyFoundDog.getUniqueID());
+	}
+	
+	@Test
+	public void testCallStackHistoryGetEvolutionOfObject() {
+		CallStackHistoryExtractorConfig config = CallStackHistoryExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ObjectEvolution", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ObjectEvolution", "endpoint", List.of("dummies.ObjectEvolution$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.ObjectEvolution", config);
+
+		CallStackHistoryExtractor extractor = new CallStackHistoryExtractor(false);
+		extractor.launch(vm, config);
+
+		Trace trace = extractor.getTrace();
+
+		// At first, the dog has the attribute age set at 1
+		TraceMethod changeAge = (TraceMethod) trace.getElements().get(1);
+		assertNotNull(changeAge);
+		assertEquals("changeAge", changeAge.getName());
+		
+		Object rawAge1 = ((TracePrimitiveValue) getFieldNamed((TraceClassReference) changeAge.getArguments().get(0).getValue(), "age").getValue()).getValue();
+		int actualAge1 = ((com.sun.jdi.IntegerValue) rawAge1).value();
+
+		assertEquals(1, actualAge1);
+		
+		// At the end, the dog has the attribute age set at 2  
+		TraceMethod endpoint = (TraceMethod) trace.getElements().get(2);
+		assertNotNull(endpoint);
+		assertEquals("endpoint", endpoint.getName());
+		
+		Object rawAge2 = ((TracePrimitiveValue) getFieldNamed((TraceClassReference) endpoint.getArguments().get(0).getValue(), "age").getValue()).getValue();
+		int actualAge2 = ((com.sun.jdi.IntegerValue) rawAge2).value();
+
+		assertEquals(2, actualAge2);
 	}
 
 }
