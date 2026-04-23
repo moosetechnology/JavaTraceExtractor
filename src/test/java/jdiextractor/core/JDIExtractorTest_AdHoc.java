@@ -22,6 +22,7 @@ import jdiextractor.tracemodel.entities.TraceMethod;
 import jdiextractor.tracemodel.entities.TraceReceiver;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaInterface;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaReferenceType;
 import jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
 import jdiextractor.tracemodel.entities.traceValues.TraceField;
 import jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
@@ -386,6 +387,27 @@ public class JDIExtractorTest_AdHoc {
 		
 		TraceJavaClass clazz = (TraceJavaClass) main.getParentType();
 		assertFalse(clazz.isParametric());
+	}
+	
+	/**
+	 * The argument of main(String[]) was previously resolved as a parametric class due to the use of only genericSignature on types
+	 * But a genericSignature exist whenever it use a generic parameter OR it extends a class/interface that does
+	 */
+	@Test
+	public void testArrayAreNotParametricClasses() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ObjectEvolution", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ObjectEvolution", "endpoint", List.of("dummies.ObjectEvolution$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.ObjectEvolution", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod main = (TraceMethod) trace.getElements().get(0);
+		
+		assertFalse(((TraceJavaReferenceType) main.getParameters().get(0).getType()).isParametric());
 	}
 	
 
