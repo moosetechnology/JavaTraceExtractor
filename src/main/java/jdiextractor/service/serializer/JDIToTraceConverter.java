@@ -28,6 +28,7 @@ import jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
 
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Field;
@@ -142,9 +143,22 @@ public abstract class JDIToTraceConverter {
 	}
 
 	private TraceJavaType newJavaTypeFrom(Type type) {
+		// First if it is an array, study the component type
+		if (type instanceof ArrayType) {
+			try {
+				type = ((ArrayType) type).componentType();
+			} catch (ClassNotLoadedException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		if (type instanceof ReferenceType) {
-			//TODO a ReferenceType can be, Class or Interface AND Arrays
-			return newJavaClassFrom((ReferenceType) type);
+			if(type instanceof InterfaceType) {
+				return newJavaInterfaceFrom((ReferenceType) type);
+			} else {
+				return newJavaClassFrom((ReferenceType) type);
+			}
+			
 		} else {
 			return new TraceJavaPrimitiveType(type.name());
 		}
@@ -154,10 +168,13 @@ public abstract class JDIToTraceConverter {
 	 * Create a JavaType from a String Pay Attention : this method is not able to
 	 * determine whether a class is parametric or not
 	 * 
+	 * It is also not able to determine whether an element is a class or an interface
+	 * 
 	 * @param typeName the name of the JavaType to create
 	 * @return the JavaType created
 	 */
 	private TraceJavaType newJavaTypeFrom(String typeName) {
+		// TODO find a better way to make this method
 		if (typeName.contains(".") || Character.isUpperCase(typeName.charAt(0))) {
 			return new TraceJavaClass(typeName);
 		} else {
@@ -170,11 +187,27 @@ public abstract class JDIToTraceConverter {
 		if (isAnonymousClass(declaringType)) {
 			traceJavaClass.setAnonymousParent(this.anonymousClassParent(declaringType));
 		}
-
-		if (declaringType.genericSignature() != null) {
-			traceJavaClass.setIsParametric(true);
-		}
+		
+		traceJavaClass.setIsParametric(isDeclaredTypeParametric(declaringType));
 		return traceJavaClass;
+	}
+
+	private TraceJavaInterface newJavaInterfaceFrom(ReferenceType declaringType) {
+		TraceJavaInterface traceJavaInterface = new TraceJavaInterface(declaringType.name());
+		
+		traceJavaInterface.setIsParametric(isDeclaredTypeParametric(declaringType));
+		return traceJavaInterface;
+	}
+
+	/**
+	 * A type is parametric if it has a genericSignature and start with the definition of its parametric types
+	 * If it does not start with the definition of its parametric types, it means that it uses parametric types
+	 * @param declaringType
+	 * @return
+	 */
+	private boolean isDeclaredTypeParametric(ReferenceType declaringType) {
+		String signature = declaringType.genericSignature();
+		return signature != null && signature.startsWith("<");
 	}
 
 	/**
@@ -211,7 +244,6 @@ public abstract class JDIToTraceConverter {
 	}
 
 	private TraceJavaReferenceType anonymousClassParent(ReferenceType declaringType) {
-		TraceJavaReferenceType traceType = null;
 		if (!(declaringType instanceof ClassType)) {
 			throw new RuntimeException(
 					"Trying to add anonymous class informations on a element that is not a class type");
@@ -222,23 +254,16 @@ public abstract class JDIToTraceConverter {
 
 		// The anonymous' parent can be an interface, and it only has one
 		if (interfaces.size() == 1) {
-			traceType = new TraceJavaInterface(interfaces.get(0).name());
-			traceType.setIsParametric(interfaces.get(0).genericSignature() != null);
+			return this.newJavaInterfaceFrom(interfaces.get(0));
 		} else if (interfaces.size() > 1) {
 			throw new RuntimeException(
 					"The supposed anonymous class has multiple interfaces, maybe it is not really an anonymous class");
 		} else if (superclass != null) {
 			// if the anonymous has a superclass, then it is its parent
-			traceType = new TraceJavaClass(superclass.name());
-			traceType.setIsParametric(superclass.genericSignature() != null);
+			return this.newJavaClassFrom(superclass);
 		}
 		
-		if (traceType == null) {
-			throw new RuntimeException("Cannot find the parent of the anonymous class");
-		}
-		
-		return traceType;
-		
+		throw new RuntimeException("Cannot find the parent of the anonymous class");
 	}
 
 	private TraceReceiver newReceiverFrom(ObjectReference receiverObject) {
