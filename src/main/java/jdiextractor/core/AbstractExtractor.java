@@ -285,17 +285,18 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	 */
 	protected void createMethodWith(StackFrame frame, boolean collectValues) {
 		Method method = frame.location().method();
-		ObjectReference receiver = frame.thisObject();
-		List<Value> argValues;
 		int newMethodId = jdiToTraceConverter.newTraceElementId();
 
-		try {
-			argValues = frame.getArgumentValues();
-		} catch (InternalException e) {
-			// Happens for native calls, and can't be obtained
-			argValues = null;
-		}
 		if (collectValues) {
+			ObjectReference receiver = frame.thisObject();
+			List<Value> argValues;
+			
+			try {
+				argValues = frame.getArgumentValues();
+			} catch (InternalException e) {
+				// Happens for native calls, and can't be obtained
+				argValues = null;
+			}
 			jdiToTraceConverter.newMethodFrom(method, argValues, receiver, newMethodId, this.getParentId());
 		} else {
 			jdiToTraceConverter.newMethodFrom(method, newMethodId, this.getParentId());

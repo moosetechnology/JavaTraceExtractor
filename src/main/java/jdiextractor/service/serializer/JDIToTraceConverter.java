@@ -13,8 +13,10 @@ import jdiextractor.tracemodel.entities.TraceMethod;
 import jdiextractor.tracemodel.entities.TraceParameter;
 import jdiextractor.tracemodel.entities.TraceReceiver;
 import jdiextractor.tracemodel.entities.TraceValue;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaInterface;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaPrimitiveType;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaReferenceType;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaType;
 import jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
@@ -27,7 +29,9 @@ import jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassType;
 import com.sun.jdi.Field;
+import com.sun.jdi.InterfaceType;
 import com.sun.jdi.LocalVariable;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
@@ -59,7 +63,7 @@ public abstract class JDIToTraceConverter {
 	 * All already visited object references
 	 */
 	private Set<Long> visitedIds = new HashSet<>();
-	
+
 	protected int lastTraceElementId;
 
 	public JDIToTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceSerializer serializer) {
@@ -74,14 +78,15 @@ public abstract class JDIToTraceConverter {
 	public abstract void serialize();
 
 	public abstract void removeLastElement();
-	
+
 	public abstract Trace getTrace();
 
 	public int newTraceElementId() {
 		return this.lastTraceElementId++;
 	}
 
-	public TraceMethod newMethodFrom(Method method, List<Value> argumentValues, ObjectReference receiverObject, int id, int parentId) {
+	public TraceMethod newMethodFrom(Method method, List<Value> argumentValues, ObjectReference receiverObject, int id,
+			int parentId) {
 		TraceMethod traceMethod = this.coreNewMethodFrom(method, id, parentId);
 
 		if (argumentValues == null) {
@@ -105,7 +110,7 @@ public abstract class JDIToTraceConverter {
 	}
 
 	public TraceMethod newMethodFrom(Method method, int id, int parentId) {
-		TraceMethod traceMethod = this.coreNewMethodFrom(method,id, parentId);
+		TraceMethod traceMethod = this.coreNewMethodFrom(method, id, parentId);
 
 		this.addElement(traceMethod);
 		return traceMethod;
@@ -138,6 +143,7 @@ public abstract class JDIToTraceConverter {
 
 	private TraceJavaType newJavaTypeFrom(Type type) {
 		if (type instanceof ReferenceType) {
+			//TODO a ReferenceType can be, Class or Interface AND Arrays
 			return newJavaClassFrom((ReferenceType) type);
 		} else {
 			return new TraceJavaPrimitiveType(type.name());
@@ -161,11 +167,78 @@ public abstract class JDIToTraceConverter {
 
 	private TraceJavaClass newJavaClassFrom(ReferenceType declaringType) {
 		TraceJavaClass traceJavaClass = new TraceJavaClass(declaringType.name());
+		if (isAnonymousClass(declaringType)) {
+			traceJavaClass.setAnonymousParent(this.anonymousClassParent(declaringType));
+		}
 
 		if (declaringType.genericSignature() != null) {
 			traceJavaClass.setIsParametric(true);
 		}
 		return traceJavaClass;
+	}
+
+	/**
+	 * Check whether or not the reference type is from an anonymous class Its name
+	 * is always the type it is defined in concatenated with a $number, for example
+	 * $1
+	 * 
+	 * @See dummies.AnonymousClass, in this class the anonymous declaration of Dog
+	 *      will be named "dummies.AnonymousClass$1"
+	 * @param declaringType the potential anonymous type
+	 * @return whether or not the reference type is from an anonymous class
+	 */
+	private boolean isAnonymousClass(ReferenceType declaringType) {
+		String className = declaringType.name();
+
+		// Use a regex expression to check if the class can be anonymous
+		if (!className.matches(".*\\$[0-9]+")) {
+			return false;
+		}
+
+		// Verify that the class really is anonymous and not just class declared with
+		// $number a the end of its name
+		try {
+			String sourceName = declaringType.sourceName();
+			String simpleName = className.substring(className.lastIndexOf('.') + 1);
+			String expectedSourceName = simpleName + ".java";
+			return !sourceName.equals(expectedSourceName);
+
+		} catch (AbsentInformationException e) {
+			// If the code is not compiled with debug information (-g:none)
+			// then accept that it is anonymous by default as it already validate the regex
+			return true;
+		}
+	}
+
+	private TraceJavaReferenceType anonymousClassParent(ReferenceType declaringType) {
+		TraceJavaReferenceType traceType = null;
+		if (!(declaringType instanceof ClassType)) {
+			throw new RuntimeException(
+					"Trying to add anonymous class informations on a element that is not a class type");
+		}
+		ClassType classType = (ClassType) declaringType;
+		ClassType superclass = classType.superclass();
+		List<InterfaceType> interfaces = classType.interfaces();
+
+		// The anonymous' parent can be an interface, and it only has one
+		if (interfaces.size() == 1) {
+			traceType = new TraceJavaInterface(interfaces.get(0).name());
+			traceType.setIsParametric(interfaces.get(0).genericSignature() != null);
+		} else if (interfaces.size() > 1) {
+			throw new RuntimeException(
+					"The supposed anonymous class has multiple interfaces, maybe it is not really an anonymous class");
+		} else if (superclass != null) {
+			// if the anonymous has a superclass, then it is its parent
+			traceType = new TraceJavaClass(superclass.name());
+			traceType.setIsParametric(superclass.genericSignature() != null);
+		}
+		
+		if (traceType == null) {
+			throw new RuntimeException("Cannot find the parent of the anonymous class");
+		}
+		
+		return traceType;
+		
 	}
 
 	private TraceReceiver newReceiverFrom(ObjectReference receiverObject) {
@@ -339,19 +412,22 @@ public abstract class JDIToTraceConverter {
 
 	private TraceValue newStringReferenceFrom(StringReference stringReference) {
 		TraceStringReference traceStringReference = new TraceStringReference();
-		/* Cannot collect the value of strings because in some attacks, other type are stored instead of String in some variables
-		 * Hence we just stop to collect string value for now
-		 * see issue https://github.com/moosetechnology/JavaTraceExtractor/issues/25
+		/*
+		 * Cannot collect the value of strings because in some attacks, other type are
+		 * stored instead of String in some variables Hence we just stop to collect
+		 * string value for now see issue
+		 * https://github.com/moosetechnology/JavaTraceExtractor/issues/25
 		 */
-		//traceStringReference.setValue(stringReference.value());
+		// traceStringReference.setValue(stringReference.value());
 		traceStringReference.setUniqueID(stringReference.uniqueID());
 		traceStringReference.setType(this.newJavaClassFrom(stringReference.referenceType()));
 		return traceStringReference;
 	}
 
 	/**
-	 * Returns the signature of a method formatted for the Moose model.
-	 * * @param method The JDI Method object
+	 * Returns the signature of a method formatted for the Moose model. * @param
+	 * method The JDI Method object
+	 * 
 	 * @return the signature of the method (e.g., "methodName(Type1,Type2)")
 	 */
 	private String signatureParameter(Method method) {
@@ -365,11 +441,11 @@ public abstract class JDIToTraceConverter {
 			if (start != -1 && end != -1) {
 				// Extract the parameter section between the parentheses
 				String paramsSignature = genericSignature.substring(start + 1, end);
-				
+
 				// Fully delegate the lexical parsing to the converter
 				JVMSignatureToMooseSignatureConverter parser = JVMSignatureToMooseSignatureConverter.make();
 				String parsedParams = parser.parseMethodParameters(paramsSignature);
-				
+
 				return String.format("%s(%s)", method.name(), parsedParams);
 			}
 		}

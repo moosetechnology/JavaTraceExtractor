@@ -19,6 +19,9 @@ import jdiextractor.config.components.BreakpointConfig;
 import jdiextractor.service.connector.JDIAttach;
 import jdiextractor.tracemodel.entities.Trace;
 import jdiextractor.tracemodel.entities.TraceMethod;
+import jdiextractor.tracemodel.entities.TraceReceiver;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaInterface;
 import jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
 import jdiextractor.tracemodel.entities.traceValues.TraceField;
 import jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
@@ -230,6 +233,160 @@ public class JDIExtractorTest_AdHoc {
 		assertTrue(endpoint.getArguments().get(0).getValue() instanceof TraceClassReference);
 	}
 	
+	@Test
+	public void testAnonymousClassRepresentation() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.AnonymousClass", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.AnonymousClass", "endpoint", List.of("dummies.AnonymousClass$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.AnonymousClass", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+
+		Trace trace = extractor.getTrace();
+		TraceMethod foo = (TraceMethod) trace.getElements().get(1);
+		
+		assertNotNull(foo);
+		
+		TraceReceiver anonymousReceiver = foo.getReceiver();
+		
+		TraceClassReference anonymousClassRef = (TraceClassReference) anonymousReceiver.getValue();
+		// IsAnonymous
+		assertTrue(((TraceJavaClass) anonymousClassRef.getType()).isAnonymous());
+		// Anonymous name
+		assertEquals("dummies.AnonymousClass$1",anonymousClassRef.getType().getName());
+		// Parent name
+		assertEquals("dummies.AnonymousClass$Dog", ((TraceJavaClass) anonymousClassRef.getType()).getAnonymousParent().getName());
+	}
+	
+	@Test
+	public void testAnonymousObjectClassRepresentation() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.AnonymousObjectClass", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.AnonymousObjectClass", "endpoint", List.of("java.lang.Object"), 0))
+				.build();
+		this.startTargetJVM("dummies.AnonymousObjectClass", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+
+		Trace trace = extractor.getTrace();
+		TraceMethod toString = (TraceMethod) trace.getElements().get(1);
+		assertNotNull(toString);
+		
+		TraceReceiver anonymousReceiver = toString.getReceiver();
+		
+		TraceClassReference anonymousClassRef = (TraceClassReference) anonymousReceiver.getValue();
+		
+		// IsAnonymous
+		assertTrue(((TraceJavaClass) anonymousClassRef.getType()).isAnonymous());
+		// Anonymous name
+		assertEquals("dummies.AnonymousObjectClass$1",anonymousClassRef.getType().getName());
+		// Parent name
+		assertEquals("java.lang.Object", ((TraceJavaClass) anonymousClassRef.getType()).getAnonymousParent().getName());
+	}
+	
+	@Test
+	public void testAnonymousInterfaceClassRepresentation() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.AnonymousInterfaceClass", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.AnonymousInterfaceClass", "endpoint", List.of("dummies.AnonymousInterfaceClass$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.AnonymousInterfaceClass", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+
+		Trace trace = extractor.getTrace();
+		TraceMethod foo = (TraceMethod) trace.getElements().get(1);
+		assertNotNull(foo);
+		
+		TraceReceiver anonymousReceiver = foo.getReceiver();
+		TraceClassReference anonymousClassRef = (TraceClassReference) anonymousReceiver.getValue();
+		
+		// IsAnonymous
+		assertTrue(((TraceJavaClass) anonymousClassRef.getType()).isAnonymous());
+		// Anonymous name
+		assertEquals("dummies.AnonymousInterfaceClass$1",anonymousClassRef.getType().getName());
+		// Parent name
+		assertEquals("dummies.AnonymousInterfaceClass$Dog", ((TraceJavaClass) anonymousClassRef.getType()).getAnonymousParent().getName());
+		assertTrue(((TraceJavaClass) anonymousClassRef.getType()).getAnonymousParent() instanceof TraceJavaInterface);
+	}
+	
+	@Test
+	public void testNotReallyAnonymousClass() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.AnonymousClass$10", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.AnonymousClass$10", "endpoint", List.of(), 0))
+				.build();
+		this.startTargetJVM("dummies.AnonymousClass$10", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+
+		Trace trace = extractor.getTrace();
+		TraceMethod main = (TraceMethod) trace.getElements().get(0);
+		
+		assertFalse(((TraceJavaClass) main.getParentType()).isAnonymous());
+	}
+	
+	@Test
+	public void testParametricInterface() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ParametricInterfaceContainer", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ParametricInterfaceContainer", "endpoint", List.of("dummies.ParametricInterfaceContainer$ParametricInterface"), 0))
+				.build();
+		this.startTargetJVM("dummies.ParametricInterfaceContainer", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod endpoint = (TraceMethod) trace.getElements().get(1);
+		
+		assertEquals("dummies.ParametricInterfaceContainer$ParametricInterface",endpoint.getParameters().get(0).getType().getName());
+		assertTrue(((TraceJavaInterface) endpoint.getParameters().get(0).getType()).isParametric());
+		
+	}
+	
+	@Test
+	public void testParametricClass() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ParametricClass", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ParametricClass", "endpoint", List.of(), 0))
+				.build();
+		this.startTargetJVM("dummies.ParametricClass", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod main = (TraceMethod) trace.getElements().get(0);
+		
+		assertTrue(main.getParentType() instanceof TraceJavaClass);
+		
+		TraceJavaClass clazz = (TraceJavaClass) main.getParentType();
+		assertTrue(clazz.isParametric());
+	}
+	
+	@Test
+	public void testNonParametricClassAreNotParametric() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ObjectEvolution", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ObjectEvolution", "endpoint", List.of("dummies.ObjectEvolution$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.ObjectEvolution", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod main = (TraceMethod) trace.getElements().get(0);
+		
+		TraceJavaClass clazz = (TraceJavaClass) main.getParentType();
+		assertFalse(clazz.isParametric());
+	}
 	
 
 }

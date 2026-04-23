@@ -11,6 +11,7 @@ import jdiextractor.tracemodel.entities.TraceMethod;
 import jdiextractor.tracemodel.entities.TraceParameter;
 import jdiextractor.tracemodel.entities.TraceReceiver;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaInterface;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaPrimitiveType;
 import jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
@@ -63,5 +64,7 @@ public abstract class TraceSerializer {
 	public abstract void serialize(TraceJavaPrimitiveType traceJavaPrimitiveType);
 
 	public abstract void serialize(TraceJavaClass traceJavaClass);
+
+	public abstract void serialize(TraceJavaInterface traceJavaInterface);
 
 }
