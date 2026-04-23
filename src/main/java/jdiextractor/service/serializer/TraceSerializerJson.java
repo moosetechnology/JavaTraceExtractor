@@ -3,6 +3,7 @@ package jdiextractor.service.serializer;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Iterator;
 
 import jdiextractor.config.components.LoggingConfig;
@@ -18,7 +19,9 @@ import jdiextractor.tracemodel.entities.TraceParameter;
 import jdiextractor.tracemodel.entities.TraceReceiver;
 import jdiextractor.tracemodel.entities.TraceValue;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaInterface;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaPrimitiveType;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaReferenceType;
 import jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
 import jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
@@ -32,7 +35,7 @@ public class TraceSerializerJson extends TraceSerializer {
 
 	private LoggingConfig loggingConfig;
 
-	private BufferedWriter writer;
+	private Writer writer;
 	private boolean valueIndependents;
 	private int nbElementLogged;
 
@@ -42,15 +45,28 @@ public class TraceSerializerJson extends TraceSerializer {
 		this.nbElementLogged = 0;
 	}
 
+	/**
+	 * Create a TraceSerializerJson with a pre defined writer
+	 * 
+	 * @param valueIndependents whether the values are independents in each frames
+	 */
+	public TraceSerializerJson(boolean valueIndependents, Writer writer) {
+		this.valueIndependents = valueIndependents;
+		this.writer = writer;
+		this.nbElementLogged = 0;
+	}
+
 	@Override
 	public void startSerialize() {
-		String fileName = this.loggingConfig.getOutputName() + "." + this.loggingConfig.getExtension();
-		try {
-			this.writer = new BufferedWriter(new FileWriter(fileName));
-		} catch (IOException e) {
-			throw new RuntimeException("Cannot open a file writer on the file: " + fileName);
+		if (writer == null) {
+			String fileName = this.loggingConfig.getOutputName() + "." + this.loggingConfig.getExtension();
+			try {
+				this.writer = new BufferedWriter(new FileWriter(fileName));
+			} catch (IOException e) {
+				throw new RuntimeException("Cannot open a file writer on the file: " + fileName);
+			}
+
 		}
-		
 		try {
 			writer.write(this.objectStart());
 
@@ -466,25 +482,56 @@ public class TraceSerializerJson extends TraceSerializer {
 
 	@Override
 	public void serialize(TraceJavaClass traceJavaClass) {
+		this.traceReferenceTypeStart(traceJavaClass);
+		if (traceJavaClass.isAnonymous()) {
+			try {
+				writer.write(this.joinElementListing());
+				writer.write(quotes("anonymousParentType") + ":");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			traceJavaClass.getAnonymousParent().acceptSerializer(this);
+		}
+		this.traceReferenceTypeEnd(traceJavaClass);
+	}
+
+	@Override
+	public void serialize(TraceJavaInterface traceJavaInterface) {
+		try {
+			this.traceReferenceTypeStart(traceJavaInterface);
+			writer.write(this.joinElementListing());
+			writer.write(quotes("isInterface") + ":" + "true");
+			this.traceReferenceTypeEnd(traceJavaInterface);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void traceReferenceTypeStart(TraceJavaReferenceType refType) {
 		try {
 			writer.write(this.objectStart());
 			writer.write(quotes("name") + ":");
-			if (traceJavaClass.getName().contains(".")) {
-				writer.write(quotes(traceJavaClass.getName()));
+			if (refType.getName().contains(".")) {
+				writer.write(quotes(refType.getName()));
 			} else {
-				writer.write(quotes("<Default Package>.".concat(traceJavaClass.getName())));
+				writer.write(quotes("<Default Package>.".concat(refType.getName())));
 			}
 
-			if (traceJavaClass.isParametric()) {
+			if (refType.isParametric()) {
 				writer.write(this.joinElementListing());
 				writer.write(quotes("isParametric") + ":" + "true");
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
+	public void traceReferenceTypeEnd(TraceJavaReferenceType refType) {
+		try {
 			writer.write(this.objectEnd());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	private void ObjectReferenceStart(TraceObjectReference traceObjectReference) throws IOException {
