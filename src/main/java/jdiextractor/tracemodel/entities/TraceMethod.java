@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jdiextractor.service.serializer.TraceSerializer;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaReferenceType;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaType;
 
 /**
@@ -29,7 +30,7 @@ public class TraceMethod extends TraceElement {
 
 	private boolean isParametric = false;
 
-	private TraceJavaType parentType;
+	private TraceJavaReferenceType parentType;
 
 	public TraceMethod() {
 
@@ -101,7 +102,7 @@ public class TraceMethod extends TraceElement {
 		return this.isClassSide;
 	}
 
-	public void setParentType(TraceJavaType parentType) {
+	public void setParentType(TraceJavaReferenceType parentType) {
 		this.parentType = parentType;
 	}
 
@@ -128,6 +129,10 @@ public class TraceMethod extends TraceElement {
 	@Override
 	public void acceptSerializer(TraceSerializer serializer) {
 		serializer.serialize(this);
+	}
+
+	public String getFullyQualifiedName() {
+		return parentType.getFullyQualifiedName() + "." + this.getSignature();
 	}
 
 }
