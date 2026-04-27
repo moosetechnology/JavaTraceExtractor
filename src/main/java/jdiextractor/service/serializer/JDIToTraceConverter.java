@@ -152,7 +152,7 @@ public abstract class JDIToTraceConverter {
 			}
 		}
 		
-		if (type instanceof ReferenceType) {
+ 		if (type instanceof ReferenceType) {
 			if(type instanceof InterfaceType) {
 				return newJavaInterfaceFrom((ReferenceType) type);
 			} else {
@@ -318,6 +318,8 @@ public abstract class JDIToTraceConverter {
 		try {
 			traceParameter.setType(this.newJavaTypeFrom(param.type()));
 		} catch (ClassNotLoadedException e) {
+			// TODO so here we got a context where ClassNotFoundException is the type of the parameter,
+			// but it seems JDI cannot handle it and throw an exception
 			throw new RuntimeException("Should not happen");
 		}
 		return traceParameter;

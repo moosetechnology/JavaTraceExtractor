@@ -410,5 +410,25 @@ public class JDIExtractorTest_AdHoc {
 		assertFalse(((TraceJavaReferenceType) main.getParameters().get(0).getType()).isParametric());
 	}
 	
+	/**
+	 * Check if ClassNotFoundException is handled as any other parameter would
+	 */
+	@Test
+	public void testClassNotFoundExceptionTypeOnMethodParameter() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ClassNotFoundParameter", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ClassNotFoundParameter", "endpoint", List.of("java.lang.ClassNotFoundException"), 0))
+				.build();
+		this.startTargetJVM("dummies.ClassNotFoundParameter", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod endpoint = (TraceMethod) trace.getElements().get(1);
+		
+		assertEquals("java.lang.ClassNotFoundException", endpoint.getParameters().get(0).getType().getName());
+	}
+	
 
 }
