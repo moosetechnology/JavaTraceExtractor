@@ -48,12 +48,12 @@ public abstract class JDIToTraceConverter {
 	 * whether the values are independents with each other, if they are, visited is
 	 * reseted between each between each TraceElement creation
 	 */
-	private boolean valuesIndependents;
+	protected boolean valuesIndependents;
 
 	/**
 	 * The maximum depth of the object graph
 	 */
-	private int maxObjectDepth;
+	protected int maxObjectDepth;
 
 	/**
 	 * The logger used when the trace population is finished
@@ -63,7 +63,7 @@ public abstract class JDIToTraceConverter {
 	/**
 	 * All already visited object references
 	 */
-	private Set<Long> visitedIds = new HashSet<>();
+	protected Set<Long> visitedIds = new HashSet<>();
 
 	protected int lastTraceElementId;
 
@@ -117,7 +117,7 @@ public abstract class JDIToTraceConverter {
 		return traceMethod;
 	}
 
-	private TraceMethod coreNewMethodFrom(Method method, int id, int parentId) {
+	protected TraceMethod coreNewMethodFrom(Method method, int id, int parentId) {
 		if (valuesIndependents) {
 			visitedIds = new HashSet<>();
 		}
@@ -142,7 +142,7 @@ public abstract class JDIToTraceConverter {
 		return traceMethod;
 	}
 
-	private TraceJavaType newJavaTypeFrom(Type type) {
+	protected TraceJavaType newJavaTypeFrom(Type type) {
 		// First if it is an array, study the component type
 		if (type instanceof ArrayType) {
 			try {
@@ -173,7 +173,7 @@ public abstract class JDIToTraceConverter {
 	 * @param typeName the name of the JavaType to create
 	 * @return the JavaType created
 	 */
-	private TraceJavaType newJavaTypeFrom(String typeName) {
+	protected TraceJavaType newJavaTypeFrom(String typeName) {
 		// TODO find a better way to make this method
 		if (typeName.contains(".") || Character.isUpperCase(typeName.charAt(0))) {
 			return new TraceJavaClass(typeName);
@@ -182,7 +182,7 @@ public abstract class JDIToTraceConverter {
 		}
 	}
 
-	private TraceJavaClass newJavaClassFrom(ReferenceType declaringType) {
+	protected TraceJavaClass newJavaClassFrom(ReferenceType declaringType) {
 		TraceJavaClass traceJavaClass = new TraceJavaClass(declaringType.name());
 		if (isAnonymousClass(declaringType)) {
 			traceJavaClass.setAnonymousParent(this.anonymousClassParent(declaringType));
@@ -192,7 +192,7 @@ public abstract class JDIToTraceConverter {
 		return traceJavaClass;
 	}
 
-	private TraceJavaInterface newJavaInterfaceFrom(ReferenceType declaringType) {
+	protected TraceJavaInterface newJavaInterfaceFrom(ReferenceType declaringType) {
 		TraceJavaInterface traceJavaInterface = new TraceJavaInterface(declaringType.name());
 		
 		traceJavaInterface.setIsParametric(isDeclaredTypeParametric(declaringType));
@@ -205,7 +205,7 @@ public abstract class JDIToTraceConverter {
 	 * @param declaringType
 	 * @return
 	 */
-	private boolean isDeclaredTypeParametric(ReferenceType declaringType) {
+	protected boolean isDeclaredTypeParametric(ReferenceType declaringType) {
 		String signature = declaringType.genericSignature();
 		return signature != null && signature.startsWith("<");
 	}
@@ -220,7 +220,7 @@ public abstract class JDIToTraceConverter {
 	 * @param declaringType the potential anonymous type
 	 * @return whether or not the reference type is from an anonymous class
 	 */
-	private boolean isAnonymousClass(ReferenceType declaringType) {
+	protected boolean isAnonymousClass(ReferenceType declaringType) {
 		String className = declaringType.name();
 
 		// Use a regex expression to check if the class can be anonymous
@@ -243,7 +243,7 @@ public abstract class JDIToTraceConverter {
 		}
 	}
 
-	private TraceJavaReferenceType anonymousClassParent(ReferenceType declaringType) {
+	protected TraceJavaReferenceType anonymousClassParent(ReferenceType declaringType) {
 		if (!(declaringType instanceof ClassType)) {
 			throw new RuntimeException(
 					"Trying to add anonymous class informations on a element that is not a class type");
@@ -266,14 +266,14 @@ public abstract class JDIToTraceConverter {
 		throw new RuntimeException("Cannot find the parent of the anonymous class");
 	}
 
-	private TraceReceiver newReceiverFrom(ObjectReference receiverObject) {
+	protected TraceReceiver newReceiverFrom(ObjectReference receiverObject) {
 		TraceReceiver traceReceiver = new TraceReceiver();
 		traceReceiver.setValue(this.newValueFromObjectReference(receiverObject, 0));
 
 		return traceReceiver;
 	}
 
-	private List<TraceArgument> createArgumentsFor(List<Value> argumentValues) {
+	protected List<TraceArgument> createArgumentsFor(List<Value> argumentValues) {
 		List<TraceArgument> res = new ArrayList<>();
 		Iterator<Value> argumentsValueIterator = argumentValues.iterator();
 
@@ -283,13 +283,13 @@ public abstract class JDIToTraceConverter {
 		return res;
 	}
 
-	private TraceArgument newArgumentFrom(Value value) {
+	protected TraceArgument newArgumentFrom(Value value) {
 		TraceArgument traceArgument = new TraceArgument();
 		traceArgument.setValue(this.newValueFrom(value, 0));
 		return traceArgument;
 	}
 
-	private List<TraceParameter> createParametersFor(Method method) {
+	protected List<TraceParameter> createParametersFor(Method method) {
 		List<TraceParameter> res = new ArrayList<>();
 		try {
 			// trying to obtain the arguments information
@@ -312,27 +312,29 @@ public abstract class JDIToTraceConverter {
 		return res;
 	}
 
-	private TraceParameter newParameterFrom(LocalVariable param) {
+	public TraceParameter newParameterFrom(LocalVariable param) {
 		TraceParameter traceParameter = new TraceParameter();
 		traceParameter.setName(param.name());
 		try {
 			traceParameter.setType(this.newJavaTypeFrom(param.type()));
 		} catch (ClassNotLoadedException e) {
-			// TODO so here we got a context where ClassNotFoundException is the type of the parameter,
-			// but it seems JDI cannot handle it and throw an exception
-			throw new RuntimeException("Should not happen");
+			// When we get to a class that is not loaded, still try to create a class from a signature
+			// The problem here will be that we cannot determine whether the type is parametric and an interface or a class
+			// Class types signature are in the form Lorg/project/ClassName;
+			String signature = param.signature();
+			traceParameter.setType(this.newJavaTypeFrom(signature.substring(1, signature.length() - 1).replace("/", ".")));
 		}
 		return traceParameter;
 	}
 
-	private TraceParameter newParameterFrom(String typeName) {
+	protected TraceParameter newParameterFrom(String typeName) {
 		TraceParameter traceParameter = new TraceParameter();
 		traceParameter.setName(null);
 		traceParameter.setType(this.newJavaTypeFrom(typeName));
 		return traceParameter;
 	}
 
-	private TraceValue newValueFrom(Value value, int depth) {
+	protected TraceValue newValueFrom(Value value, int depth) {
 		TraceValue traceValue;
 		if (value == null) {
 			traceValue = null;
@@ -348,14 +350,14 @@ public abstract class JDIToTraceConverter {
 		return traceValue;
 	}
 
-	private TraceValue newValueFromPrimitiveValue(PrimitiveValue value, int depth) {
+	protected TraceValue newValueFromPrimitiveValue(PrimitiveValue value, int depth) {
 		TracePrimitiveValue tracePrimitiveValue = new TracePrimitiveValue();
 		tracePrimitiveValue.setType(value.type().name());
 		tracePrimitiveValue.setValue(value);
 		return tracePrimitiveValue;
 	}
 
-	private TraceValue newValueFromObjectReference(ObjectReference objectReference, int depth) {
+	protected TraceValue newValueFromObjectReference(ObjectReference objectReference, int depth) {
 		long id = objectReference.uniqueID();
 
 		if (visitedIds.contains(id)) {
@@ -372,7 +374,7 @@ public abstract class JDIToTraceConverter {
 		}
 	}
 
-	private TraceValue newClassReferenceFrom(ObjectReference ref, ReferenceType type, int depth) {
+	protected TraceValue newClassReferenceFrom(ObjectReference ref, ReferenceType type, int depth) {
 		TraceClassReference traceClassReference = new TraceClassReference();
 		traceClassReference.setUniqueID(ref.uniqueID());
 		traceClassReference.setType(this.newJavaClassFrom(type));
@@ -390,7 +392,7 @@ public abstract class JDIToTraceConverter {
 		return traceClassReference;
 	}
 
-	private TraceField newFieldFrom(ObjectReference objectReference, int depth, Field field) {
+	protected TraceField newFieldFrom(ObjectReference objectReference, int depth, Field field) {
 		TraceField tracefield = new TraceField();
 		tracefield.setName(field.name());
 
@@ -411,7 +413,7 @@ public abstract class JDIToTraceConverter {
 		return tracefield;
 	}
 
-	private TraceArrayReference newArrayReferenceFrom(ArrayReference arrayReference, int depth) {
+	protected TraceArrayReference newArrayReferenceFrom(ArrayReference arrayReference, int depth) {
 		TraceArrayReference traceArrayReference = new TraceArrayReference();
 		traceArrayReference.setUniqueID(arrayReference.uniqueID());
 		traceArrayReference.setType(this.newJavaClassFrom(arrayReference.referenceType()));
@@ -431,13 +433,13 @@ public abstract class JDIToTraceConverter {
 		return traceArrayReference;
 	}
 
-	private TraceArrayValue newArrayValueFrom(int depth, List<Value> arrayValues, int index) {
+	protected TraceArrayValue newArrayValueFrom(int depth, List<Value> arrayValues, int index) {
 		TraceArrayValue traceArrayValue = new TraceArrayValue();
 		traceArrayValue.setValue(this.newValueFrom(arrayValues.get(index), depth + 1));
 		return traceArrayValue;
 	}
 
-	private TraceValue newStringReferenceFrom(StringReference stringReference) {
+	protected TraceValue newStringReferenceFrom(StringReference stringReference) {
 		TraceStringReference traceStringReference = new TraceStringReference();
 		/*
 		 * Cannot collect the value of strings because in some attacks, other type are
@@ -457,7 +459,7 @@ public abstract class JDIToTraceConverter {
 	 * 
 	 * @return the signature of the method (e.g., "methodName(Type1,Type2)")
 	 */
-	private String signatureParameter(Method method) {
+	protected String signatureParameter(Method method) {
 		String genericSignature = method.genericSignature();
 
 		// 1. Absolute source of truth: The JNI generic signature
@@ -500,7 +502,7 @@ public abstract class JDIToTraceConverter {
 		return String.format("%s(%s)", method.name(), paramString);
 	}
 
-	private String parseTypeName(LocalVariable var) {
+	protected String parseTypeName(LocalVariable var) {
 		JVMSignatureToMooseSignatureConverter parser = JVMSignatureToMooseSignatureConverter.make();
 		if (var.genericSignature() == null)
 			return parser.parseTypeSig(var.signature());
@@ -508,7 +510,7 @@ public abstract class JDIToTraceConverter {
 			return parser.parseTypeSig(var.genericSignature());
 	}
 
-	private String parseTypeName(String s) {
+	protected String parseTypeName(String s) {
 		int lastDotIndex = s.lastIndexOf('.');
 		return lastDotIndex == -1 ? s : s.substring(lastDotIndex + 1);
 	}
