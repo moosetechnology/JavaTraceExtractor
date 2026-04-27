@@ -184,7 +184,7 @@ public abstract class JDIToTraceConverter {
 
 	protected TraceJavaClass newJavaClassFrom(ReferenceType declaringType) {
 		TraceJavaClass traceJavaClass = new TraceJavaClass(declaringType.name());
-		if (isAnonymousClass(declaringType)) {
+		if (isAnonymousClass(declaringType) || isProxyClass(declaringType)) {
 			traceJavaClass.setAnonymousParent(this.anonymousClassParent(declaringType));
 		}
 		
@@ -211,9 +211,8 @@ public abstract class JDIToTraceConverter {
 	}
 
 	/**
-	 * Check whether or not the reference type is from an anonymous class Its name
-	 * is always the type it is defined in concatenated with a $number, for example
-	 * $1
+	 * Check whether or not the reference type is from an anonymous class 
+	 * Its name is always the type it is defined in concatenated with a $number, for example $1
 	 * 
 	 * @See dummies.AnonymousClass, in this class the anonymous declaration of Dog
 	 *      will be named "dummies.AnonymousClass$1"
@@ -241,6 +240,15 @@ public abstract class JDIToTraceConverter {
 			// then accept that it is anonymous by default as it already validate the regex
 			return true;
 		}
+	}
+	
+	/**
+	 * Check whether or not the reference type is from a proxy class
+	 * @param declaringType  the potential proxy type
+	 * @return whether or not the reference type is from a proxy class
+	 */
+	private boolean isProxyClass(ReferenceType declaringType) {
+		return declaringType.name().startsWith("com.sun.proxy.$Proxy");
 	}
 
 	protected TraceJavaReferenceType anonymousClassParent(ReferenceType declaringType) {

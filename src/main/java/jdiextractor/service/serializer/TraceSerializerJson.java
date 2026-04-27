@@ -510,13 +510,8 @@ public class TraceSerializerJson extends TraceSerializer {
 	public void traceReferenceTypeStart(TraceJavaReferenceType refType) {
 		try {
 			writer.write(this.objectStart());
-			writer.write(quotes("name") + ":");
-			if (refType.getName().contains(".")) {
-				writer.write(quotes(refType.getName()));
-			} else {
-				writer.write(quotes("<Default Package>.".concat(refType.getName())));
-			}
-
+			writer.write(quotes("name") + ":" + quotes(refType.getFullyQualifiedName()));
+			
 			if (refType.isParametric()) {
 				writer.write(this.joinElementListing());
 				writer.write(quotes("isParametric") + ":" + "true");

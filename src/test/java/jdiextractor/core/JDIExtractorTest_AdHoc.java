@@ -20,6 +20,7 @@ import jdiextractor.service.connector.JDIAttach;
 import jdiextractor.tracemodel.entities.Trace;
 import jdiextractor.tracemodel.entities.TraceMethod;
 import jdiextractor.tracemodel.entities.TraceReceiver;
+import jdiextractor.tracemodel.entities.TraceValue;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaInterface;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaReferenceType;
@@ -428,6 +429,46 @@ public class JDIExtractorTest_AdHoc {
 		TraceMethod endpoint = (TraceMethod) trace.getElements().get(1);
 		
 		assertEquals("java.lang.ClassNotFoundException", endpoint.getParameters().get(0).getType().getName());
+	}
+	
+	
+	@Test
+	public void testProxyStack() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ProxyClass", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ProxyClass", "endpoint", List.of("dummies.ProxyClass$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.ProxyClass", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		assertEquals(4,trace.getElements().size());
+		
+		assertEquals("dummies.ProxyClass.main(String[])",((TraceMethod) trace.getElements().get(0)).getFullyQualifiedName());
+		assertEquals("com.sun.proxy.$Proxy0.foo()",((TraceMethod) trace.getElements().get(1)).getFullyQualifiedName());
+		assertEquals("dummies.ProxyClass$DogHandler.invoke(Object,Method,Object[])",((TraceMethod) trace.getElements().get(2)).getFullyQualifiedName());
+		assertEquals("dummies.ProxyClass.endpoint(ProxyClass$Dog)",((TraceMethod) trace.getElements().get(3)).getFullyQualifiedName());
+	}
+	
+	@Test
+	public void testProxyType() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ProxyClass", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ProxyClass", "endpoint", List.of("dummies.ProxyClass$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.ProxyClass", config);
+
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod foo = (TraceMethod) trace.getElements().get(1);
+		TraceClassReference proxy = (TraceClassReference) foo.getReceiver().getValue();
+		
+		assertTrue(((TraceJavaClass) proxy.getType()).isAnonymous());
+		assertEquals("dummies.ProxyClass$Dog", ((TraceJavaClass) proxy.getType()).getAnonymousParent().getName());
 	}
 	
 
