@@ -299,6 +299,11 @@ public abstract class JDIToTraceConverter {
 
 	protected List<TraceParameter> createParametersFor(Method method) {
 		List<TraceParameter> res = new ArrayList<>();
+		//Do not bother to ask for parameter if there isn't any
+		if(method.argumentTypeNames().isEmpty()) {
+			return res;
+		}
+		
 		try {
 			// trying to obtain the arguments information
 			Iterator<LocalVariable> ite = method.arguments().iterator();
@@ -311,10 +316,19 @@ public abstract class JDIToTraceConverter {
 			// arguments name could not be obtained
 			// Since the name are not obtainable just log the parameters types
 			// This happen when classes are not yet loaded or with native methods
-			Iterator<String> ite = method.argumentTypeNames().iterator();
-			while (ite.hasNext()) {
-				res.add(this.newParameterFrom(ite.next()));
+			try {
+				Iterator<Type> ite = method.argumentTypes().iterator();
+				while (ite.hasNext()) {
+					res.add(this.newParameterFrom(ite.next()));
+				}
+			} catch (ClassNotLoadedException e2) {
+				// Last option : class are not loaded, just log the String of the class
+				Iterator<String> ite = method.argumentTypeNames().iterator();
+				while (ite.hasNext()) {
+					res.add(this.newParameterFrom(ite.next()));
+				}
 			}
+			
 		}
 
 		return res;
@@ -339,6 +353,13 @@ public abstract class JDIToTraceConverter {
 		TraceParameter traceParameter = new TraceParameter();
 		traceParameter.setName(null);
 		traceParameter.setType(this.newJavaTypeFrom(typeName));
+		return traceParameter;
+	}
+	
+	protected TraceParameter newParameterFrom(Type type) {
+		TraceParameter traceParameter = new TraceParameter();
+		traceParameter.setName(null);
+		traceParameter.setType(this.newJavaTypeFrom(type));
 		return traceParameter;
 	}
 
