@@ -315,7 +315,8 @@ public abstract class JDIToTraceConverter {
 		} catch (AbsentInformationException e) {
 			// arguments name could not be obtained
 			// Since the name are not obtainable just log the parameters types
-			// This happen when classes are not yet loaded or with native methods
+			// This happen when classes are not yet loaded or with native methods,
+			// or if the code is not compiled with the option -g:vars
 			try {
 				Iterator<Type> ite = method.argumentTypes().iterator();
 				while (ite.hasNext()) {
