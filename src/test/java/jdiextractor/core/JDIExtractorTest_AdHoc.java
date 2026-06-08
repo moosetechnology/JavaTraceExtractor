@@ -24,8 +24,10 @@ import jdiextractor.tracemodel.entities.TraceValue;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaInterface;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaReferenceType;
+import jdiextractor.tracemodel.entities.javaType.TraceJavaType;
 import jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
 import jdiextractor.tracemodel.entities.traceValues.TraceField;
+import jdiextractor.tracemodel.entities.traceValues.TraceObjectReference;
 import jdiextractor.tracemodel.entities.traceValues.TracePrimitiveValue;
 import jdiextractor.tracemodel.entities.traceValues.TraceStringReference;
 import jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
@@ -469,6 +471,62 @@ public class JDIExtractorTest_AdHoc {
 		
 		assertTrue(((TraceJavaClass) proxy.getType()).isAnonymous());
 		assertEquals("dummies.ProxyClass$Dog", ((TraceJavaClass) proxy.getType()).getAnonymousParent().getName());
+	}
+	
+	@Test
+	public void testTypeContainerInnerClass() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.SimpleClassTypeContainer", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.SimpleClassTypeContainer", "endpoint", List.of("dummies.SimpleClassTypeContainer$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.SimpleClassTypeContainer", config);
+		
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod foo = (TraceMethod) trace.getElements().get(1);
+		
+		TraceValue dog = foo.getReceiver().getValue();
+		assertTrue(dog instanceof TraceObjectReference);
+		
+		TraceJavaReferenceType dogType = (TraceJavaReferenceType) ((TraceObjectReference) dog).getType();
+		
+		// Check the type container 
+		assertTrue(dogType.isInnerClass());
+		assertTrue(dogType.getTypeContainer() instanceof TraceJavaClass);
+		TraceJavaClass dogContainer = (TraceJavaClass) dogType.getTypeContainer();
+		assertFalse(dogContainer.isParametric());
+	}
+	
+	@Test
+	public void testNotInnerTypeDoesNotHaveTypeContainer() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.SimpleClassTypeContainer", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.SimpleClassTypeContainer", "endpoint", List.of("dummies.SimpleClassTypeContainer$Dog"), 0))
+				.build();
+		this.startTargetJVM("dummies.SimpleClassTypeContainer", config);
+		
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod foo = (TraceMethod) trace.getElements().get(1);
+		
+		TraceValue dog = foo.getReceiver().getValue();
+		assertTrue(dog instanceof TraceObjectReference);
+		
+		TraceJavaReferenceType dogType = (TraceJavaReferenceType) ((TraceObjectReference) dog).getType();
+		
+		// Check the type container 
+		assertTrue(dogType.isInnerClass());
+		assertTrue(dogType.getTypeContainer() instanceof TraceJavaClass);
+		TraceJavaClass dogContainer = (TraceJavaClass) dogType.getTypeContainer();
+		assertFalse(dogContainer.isParametric());
+		
+		// DogContainer should not have type container has it is SimpleClassTypeContainer
+		assertEquals(dogContainer.getTypeContainer(), null);
+		assertFalse(dogContainer.isInnerClass()); // Should also not be an InnerClass
 	}
 	
 

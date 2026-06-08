@@ -153,15 +153,20 @@ public abstract class JDIToTraceConverter {
 		}
 		
  		if (type instanceof ReferenceType) {
-			if(type instanceof InterfaceType) {
-				return newJavaInterfaceFrom((ReferenceType) type);
-			} else {
-				return newJavaClassFrom((ReferenceType) type);
-			}
-			
+ 			return this.newJavaReferenceTypeFrom((ReferenceType) type);
 		} else {
 			return new TraceJavaPrimitiveType(type.name());
 		}
+	}
+	
+	protected TraceJavaReferenceType newJavaReferenceTypeFrom(ReferenceType type) {
+		TraceJavaReferenceType result; 
+		if(type instanceof InterfaceType) {
+			result = newJavaInterfaceFrom((ReferenceType) type);
+		} else {
+			result = newJavaClassFrom((ReferenceType) type);
+		}
+		return result;
 	}
 
 	/**
@@ -482,6 +487,8 @@ public abstract class JDIToTraceConverter {
 		traceStringReference.setType(this.newJavaClassFrom(stringReference.referenceType()));
 		return traceStringReference;
 	}
+	
+	
 
 	/**
 	 * Returns the signature of a method formatted for the Moose model. * @param
