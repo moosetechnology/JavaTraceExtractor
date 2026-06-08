@@ -128,7 +128,7 @@ public abstract class JDIToTraceConverter {
 		traceMethod.setName(method.name());
 		traceMethod.setSignature(this.signatureParameter(method));
 		traceMethod.setClassSide(method.isStatic());
-		traceMethod.setParentType(this.newJavaClassFrom(method.location().declaringType()));
+		traceMethod.setParentType(this.newJavaReferenceTypeFrom(method.location().declaringType()));
 		Iterator<TraceParameter> ite = this.createParametersFor(method).iterator();
 		while (ite.hasNext()) {
 			traceMethod.addParameter(ite.next());
@@ -140,33 +140,6 @@ public abstract class JDIToTraceConverter {
 			traceMethod.setIsParametric(true);
 		}
 		return traceMethod;
-	}
-
-	protected TraceJavaType newJavaTypeFrom(Type type) {
-		// First if it is an array, study the component type
-		if (type instanceof ArrayType) {
-			try {
-				type = ((ArrayType) type).componentType();
-			} catch (ClassNotLoadedException e) {
-				e.printStackTrace();
-			}
-		}
-		
- 		if (type instanceof ReferenceType) {
- 			return this.newJavaReferenceTypeFrom((ReferenceType) type);
-		} else {
-			return new TraceJavaPrimitiveType(type.name());
-		}
-	}
-	
-	protected TraceJavaReferenceType newJavaReferenceTypeFrom(ReferenceType type) {
-		TraceJavaReferenceType result; 
-		if(type instanceof InterfaceType) {
-			result = newJavaInterfaceFrom((ReferenceType) type);
-		} else {
-			result = newJavaClassFrom((ReferenceType) type);
-		}
-		return result;
 	}
 
 	/**
@@ -185,6 +158,41 @@ public abstract class JDIToTraceConverter {
 		} else {
 			return new TraceJavaPrimitiveType(typeName);
 		}
+	}
+
+	protected TraceJavaType newJavaTypeFrom(Type type) {
+		// First if it is an array, study the component type
+		if (type instanceof ArrayType) {
+			try {
+				return newJavaTypeFrom(((ArrayType) type).componentType());
+			} catch (ClassNotLoadedException e) {
+				// If the component is not loaded, secure the return by creating a java class by default
+				return new TraceJavaClass(type.name());
+			}
+		}
+		
+ 		if (type instanceof ReferenceType) {
+ 			return this.newJavaReferenceTypeFrom((ReferenceType) type);
+		} else {
+			return new TraceJavaPrimitiveType(type.name());
+		}
+	}
+	
+	protected TraceJavaReferenceType newJavaReferenceTypeFrom(ReferenceType type) {
+		TraceJavaReferenceType result; 
+		if(type instanceof InterfaceType) {
+			result = newJavaInterfaceFrom((InterfaceType) type);
+		} else {
+			result = newJavaClassFrom((ClassType) type);
+		}
+
+		// Immediate resolution of the enclosing type
+		ReferenceType enclosingType = getEnclosingType(type);
+		if (enclosingType != null) {
+			result.setTypeContainer(this.newJavaReferenceTypeFrom(enclosingType));
+		}
+
+		return result;
 	}
 
 	protected TraceJavaClass newJavaClassFrom(ReferenceType declaringType) {
@@ -273,7 +281,7 @@ public abstract class JDIToTraceConverter {
 					"The supposed anonymous class has multiple interfaces, maybe it is not really an anonymous class");
 		} else if (superclass != null) {
 			// if the anonymous has a superclass, then it is its parent
-			return this.newJavaClassFrom(superclass);
+			return this.newJavaReferenceTypeFrom(superclass);
 		}
 		
 		throw new RuntimeException("Cannot find the parent of the anonymous class");
@@ -412,7 +420,7 @@ public abstract class JDIToTraceConverter {
 	protected TraceValue newClassReferenceFrom(ObjectReference ref, ReferenceType type, int depth) {
 		TraceClassReference traceClassReference = new TraceClassReference();
 		traceClassReference.setUniqueID(ref.uniqueID());
-		traceClassReference.setType(this.newJavaClassFrom(type));
+		traceClassReference.setType(this.newJavaReferenceTypeFrom(type));
 
 		if (!type.isPrepared()) {
 			traceClassReference.setPrepared(false);
@@ -451,7 +459,7 @@ public abstract class JDIToTraceConverter {
 	protected TraceArrayReference newArrayReferenceFrom(ArrayReference arrayReference, int depth) {
 		TraceArrayReference traceArrayReference = new TraceArrayReference();
 		traceArrayReference.setUniqueID(arrayReference.uniqueID());
-		traceArrayReference.setType(this.newJavaClassFrom(arrayReference.referenceType()));
+		traceArrayReference.setType(this.newJavaTypeFrom(arrayReference.referenceType()));
 
 		List<Value> arrayValues = arrayReference.getValues();
 
@@ -484,8 +492,42 @@ public abstract class JDIToTraceConverter {
 		 */
 		// traceStringReference.setValue(stringReference.value());
 		traceStringReference.setUniqueID(stringReference.uniqueID());
-		traceStringReference.setType(this.newJavaClassFrom(stringReference.referenceType()));
+		traceStringReference.setType(this.newJavaReferenceTypeFrom(stringReference.referenceType()));
 		return traceStringReference;
+	}
+	
+	/**
+	 * Determines if the ReferenceType is a named InnerClass and returns its enclosing type.
+	 * Acts through surgical string manipulation to compensate for the JDI API's shortcomings.
+	 * * @param type The type to analyze
+	 * @return The enclosing ReferenceType, or null if not found or not applicable.
+	 */
+	protected ReferenceType getEnclosingType(ReferenceType type) {
+		// 1. Immediate exclusion of anonymous classes and proxies that would distort the analysis
+		if (isAnonymousClass(type) || isProxyClass(type)) {
+			return null;
+		}
+
+		String className = type.name();
+		int lastDollarIndex = className.lastIndexOf('$');
+
+		// 2. The absence of '$' categorically demonstrates that it is not an inner class
+		if (lastDollarIndex == -1) {
+			return null;
+		}
+
+		// 3. Extraction of the enclosing class's qualified name
+		String enclosingClassName = className.substring(0, lastDollarIndex);
+
+		// 4. Order given to the VirtualMachine to resolve the target type
+		List<ReferenceType> enclosingTypes = type.virtualMachine().classesByName(enclosingClassName);
+
+		// 5. Securing the blind spot: the enclosing type is not in memory
+		if (enclosingTypes.isEmpty()) {
+			return null; 
+		}
+
+		return enclosingTypes.get(0);
 	}
 	
 	
