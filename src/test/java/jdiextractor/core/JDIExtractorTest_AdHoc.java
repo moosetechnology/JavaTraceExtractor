@@ -24,7 +24,6 @@ import jdiextractor.tracemodel.entities.TraceValue;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaClass;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaInterface;
 import jdiextractor.tracemodel.entities.javaType.TraceJavaReferenceType;
-import jdiextractor.tracemodel.entities.javaType.TraceJavaType;
 import jdiextractor.tracemodel.entities.traceValues.TraceClassReference;
 import jdiextractor.tracemodel.entities.traceValues.TraceField;
 import jdiextractor.tracemodel.entities.traceValues.TraceObjectReference;
@@ -528,6 +527,37 @@ public class JDIExtractorTest_AdHoc {
 		assertEquals(dogContainer.getTypeContainer(), null);
 		assertFalse(dogContainer.isInnerClass()); // Should also not be an InnerClass
 	}
+	
+	@Test
+	public void testTypeContainerOfInnerInnerClass() {
+		CallStackSnapshotExtractorConfig config = CallStackSnapshotExtractorConfig.builder()
+				.entrypoint(new BreakpointConfig("dummies.ClassTypeContainerDoubleInnerClasses", "main", List.of("java.lang.String[]"), 0))
+				.endpoint(new BreakpointConfig("dummies.ClassTypeContainerDoubleInnerClasses", "endpoint", List.of("dummies.ClassTypeContainerDoubleInnerClasses$Dog$Cat"), 0))
+				.build();
+		this.startTargetJVM("dummies.ClassTypeContainerDoubleInnerClasses", config);
+		
+		CallStackSnapshotExtractor extractor = new CallStackSnapshotExtractor(false);
+		extractor.launch(vm, config);
+		
+		Trace trace = extractor.getTrace();
+		TraceMethod bar = (TraceMethod) trace.getElements().get(2);
+		
+		TraceValue cat = bar.getReceiver().getValue();
+		assertTrue(cat instanceof TraceObjectReference);
+		
+		TraceJavaReferenceType catType = (TraceJavaReferenceType) ((TraceObjectReference) cat).getType();
+		
+		// Check the type cat container 
+		assertTrue(catType.isInnerClass());
+		assertTrue(catType.getTypeContainer() instanceof TraceJavaClass);
+		TraceJavaClass dogType = (TraceJavaClass) catType.getTypeContainer();
+		assertFalse(dogType.isParametric());
+		
+		// Check the type dog container 
+		assertTrue(dogType.isInnerClass());
+		assertTrue(dogType.getTypeContainer() instanceof TraceJavaClass);
+		TraceJavaClass dogContainer = (TraceJavaClass) dogType.getTypeContainer();
+		assertFalse(dogContainer.isParametric());}
 	
 
 }
