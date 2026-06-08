@@ -516,6 +516,11 @@ public class TraceSerializerJson extends TraceSerializer {
 				writer.write(this.joinElementListing());
 				writer.write(quotes("isParametric") + ":" + "true");
 			}
+			if(refType.isInnerClass()) {
+				writer.write(this.joinElementListing());
+				writer.write(quotes("typeContainer") + ":");
+				refType.getTypeContainer().acceptSerializer(this);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
