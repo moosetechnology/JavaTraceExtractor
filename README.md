@@ -22,14 +22,13 @@ There are two ways to do this:
    - Navigate to Maven > Update Project... 
    - Ensure your project is selected and click OK to force the update and resolve dependencies.
 
-### Step 2: Launch the program you want to analyze with the following VM argument:
+### Step 2: Launch the target program with the following VM arguments
 ```
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006 
 ```
 
-
-In Eclipse, you can add this argument in the *Run Configuration > VM Arguments* section:  
-	<img src="utils/image/run-Config-VMargs.png" width="460" height="331">  
+In Eclipse, open the **Run Configurations** for your target application and paste this string into the **Arguments > VM Arguments section**:  
+	<img src="utils/image/run-Config-VMargs.png" width="70%">  
 
 This command enables debug mode on the Java VM:  
 - jdwp: Java Debug Wire Protocol
