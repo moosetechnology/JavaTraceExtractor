@@ -6,24 +6,23 @@ Provide ability to extract java traces compatible with [FamixJavaTrace](https://
 It was first created to provide a parser for Java call stacks, **Support dropped since v1.0.0**.   
 For More information about this meta-model see the [FamixCallStack](https://github.com/moosetechnology/FamixCallStack) project.
 
+## Download the project
+This section explain how to download the project, with eclipse as a reference.
 
+**A step by step tutorial can be found here:** [How to download the project](./utils/tutorials/download.md)
 
 ##  How to use
+> **This tool requires a Java version of 8 and below to work, but can analyze any Java version.**
 
-This tool requires Java version 9 to 21.  
-Newer versions might work, but have not been tested.  
-It is highly recommended to use the **same Java version** for both the program you want to analyze and the extractor.  
-Using different versions may lead to unexpected behavior.  
+### Step 1: Make at least a maven build to imports necessary libraries
 
-### Step 0: Make at least a maven build to imports necessary libraries
-
-### Step 1: Launch the program you want to analyze with the following VM argument:
+### Step 2: Launch the program you want to analyze with the following VM argument:
 ```
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006 
 ```
 
 
-In Eclipse, you can add this argument in the *Run Configuration > VM Arguments* section: 
+In Eclipse, you can add this argument in the *Run Configuration > VM Arguments* section:  
 	<img src="utils/image/run-Config-VMargs.png" width="460" height="331">  
 
 This command enables debug mode on the Java VM:  
@@ -33,12 +32,12 @@ This command enables debug mode on the Java VM:
 - suspend=y: JVM execution is paused until a debugger connects
 - address=5006: Port used to wait for debugger connection
 
-### Step 2: Configure the Extractor
+### Step 3: Configure the Extractor
 Edit the configXX.json file to fit the structure of your project.  
 A different configuration file is present for every algorithms by default.  
 Refer to  [config.md](utils/tutorials/config.md) for detailed instructions.
 
-### Step 3: Run the Extractor
+### Step 4: Run the Extractor
 **you can pass a path to a config file in argument if you need to keep trace of multiple configurations**  
 Run either : 
 - SnapshotCSExtractorLauncher : Fast, but object states are captured at the very end. 
