@@ -1,18 +1,19 @@
-# JavaCallStackExtractor
+# JavaTraceExtractor
 
-JavaCallStackExtractor is a tool designed to extract as much information as possible from a Java call stack stored in a text-based file.  
+JavaTraceExtractor is a dynamic analysis tool designed to extract Java execution traces and call stacks directly from a running Java Virtual Machine (JVM) into a text-based file.  
 Provide ability to extract java traces compatible with [FamixJavaTrace](https://github.com/LeoDefossez/Famix-JavaTrace) enabling their analysis within the [Moose](https://moosetechnology.org/) software analysis platform by generating a dedicated meta-model.
 
 It was first created to provide a parser for Java call stacks, **Support dropped since v1.0.0**.   
 For More information about this meta-model see the [FamixCallStack](https://github.com/moosetechnology/FamixCallStack) project.
 
-## Download the project
-This section explain how to download the project, with eclipse as a reference.
+## ⚠ Prerequisites
+**Critical Limit:** This tool **requires Java 8 or below** to run. However, it can attach to and analyze target applications running on *any* Java version.
 
-**A step-by-step tutorial can be found here:** [How to download the project](./utils/tutorials/download.md)
+## Installation
 
-##  How to use
-> **This tool requires a Java version of 8 and below to work, but can analyze any Java version.**
+A detailed step-by-step guide is available: [Download & Import Tutorial](./utils/tutorials/download.md)
+
+##  Usage Guide
 
 ### Step 1: Run a Maven build to import necessary libraries
 There are two ways to do this:
