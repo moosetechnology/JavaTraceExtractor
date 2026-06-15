@@ -9,12 +9,18 @@ For More information about this meta-model see the [FamixCallStack](https://gith
 ## Download the project
 This section explain how to download the project, with eclipse as a reference.
 
-**A step by step tutorial can be found here:** [How to download the project](./utils/tutorials/download.md)
+**A step-by-step tutorial can be found here:** [How to download the project](./utils/tutorials/download.md)
 
 ##  How to use
 > **This tool requires a Java version of 8 and below to work, but can analyze any Java version.**
 
-### Step 1: Make at least a maven build to imports necessary libraries
+### Step 1: Run a Maven build to import necessary libraries
+There are two ways to do this:
+
+1. Open a terminal at the root of the project and execute: `mvn clean install`
+2. Right-click on the project in Eclipse:
+   - Navigate to Maven > Update Project... 
+   - Ensure your project is selected and click OK to force the update and resolve dependencies.
 
 ### Step 2: Launch the program you want to analyze with the following VM argument:
 ```
