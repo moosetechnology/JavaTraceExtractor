@@ -37,17 +37,23 @@ This command enables debug mode on the Java VM:
 - suspend=y: JVM execution is paused until a debugger connects
 - address=5006: Port used to wait for debugger connection
 
-### Step 3: Configure the Extractor
-Edit the configXX.json file to fit the structure of your project.  
-A different configuration file is present for every algorithms by default.  
-Refer to  [config.md](utils/tutorials/config.md) for detailed instructions.
+### Step 3: Configure and Run the Extractor
 
-### Step 4: Run the Extractor
-**you can pass a path to a config file in argument if you need to keep trace of multiple configurations**  
-Run either : 
-- SnapshotCSExtractorLauncher : Fast, but object states are captured at the very end. 
-	- Usefull for concepts
-- HistoryCSExtractorLauncher : Slow, but historically accurate.
-	- Usefull for in depth analysis  
-	
-The output will be generated in the root directory of this repository.
+#### 3.1 Choose Your Strategy
+Select an extractor from the `jdiextractor.launcher` package based on your performance and accuracy needs:
+
+| Extractor                     | Type            | Performance  | Output / Behavior                           | Default Config File     |
+|:------------------------------|:----------------|:-------------|:--------------------------------------------|:------------------------|
+| `SnapshotCSExtractorLauncher` | Call stack      | Fast         | Object states captured only at the very end | `configCSSnapshot.json` |
+| `HistoryCSExtractorLauncher`  | Call stack      | Slow         | Historically accurate                       | `configCSHistory.json`  |
+| `TraceExtractorStepLauncher`  | Execution trace | Slow & Heavy | Traces all method calls                     | `configTrace.json`      |
+
+#### 3.2 Edit the Configuration
+Edit your chosen `.json` file to match your project's structure. By default, the extractor automatically uses the configuration file linked to its algorithm.
+
+> **Tip:** You can maintain multiple configurations by passing a custom file path as an argument to the extractor, preventing default overrides.
+
+Refer to [`config.md`](utils/tutorials/config.md) for detailed configuration instructions.
+
+#### 3.3 Execute
+Run the selected launcher to begin extraction.
