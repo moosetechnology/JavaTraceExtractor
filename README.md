@@ -62,4 +62,4 @@ Refer to [`config.md`](utils/tutorials/config.md) for detailed configuration ins
 Run the target application followed by the selected launcher to begin extraction.
 
 #### 3.4 Find the results
-Results are generated at the root of the project, named according to your configXX.json 'outputName.extension'
+Results are generated at the root of the JavaTraceExtractor project, named according to 'outputName.extension' field in your configXX.json file.
