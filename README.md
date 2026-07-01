@@ -38,6 +38,8 @@ This command enables debug mode on the Java VM:
 - suspend=y: JVM execution is paused until a debugger connects
 - address=5006: Port used to wait for debugger connection
 
+NB. Click on Apply and on Close (do not click on Run in this step)
+
 ### Step 3: Configure and Run the Extractor
 
 #### 3.1 Choose Your Strategy
