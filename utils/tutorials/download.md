@@ -1,4 +1,4 @@
-# Downloading the Project
+# Downloading the Project (JavaTraceExtractor)
 This section explains how to download the project, using Eclipse as a reference.
 
 ## 1. In Eclipse: Right-click in the empty area of the 'Project Explorer' and select 'Import...'
