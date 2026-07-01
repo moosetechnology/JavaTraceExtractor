@@ -7,7 +7,7 @@ It was first created to provide a parser for Java call stacks, **Support dropped
 For More information about this meta-model see the [FamixCallStack](https://github.com/moosetechnology/FamixCallStack) project.
 
 ## ⚠ Prerequisites
-**Critical Limit:** This tool **requires Java 8 or below** to run. However, it can attach to and analyze target applications running on *any* Java version.
+**Critical Limit:** This tool **requires Java 9 or above** to run. However, it can attach to and analyze target applications running on *any* Java version.
 
 ## Installation
 
