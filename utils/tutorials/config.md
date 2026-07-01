@@ -28,7 +28,6 @@
 		"extension": "tr"
 	}
 }
-}
 ```
 
 ## Using multiple configurations
