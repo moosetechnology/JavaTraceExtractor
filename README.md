@@ -59,4 +59,4 @@ Edit your chosen `.json` file to match your project's structure. By default, the
 Refer to [`config.md`](utils/tutorials/config.md) for detailed configuration instructions.
 
 #### 3.3 Execute
-Run the selected launcher to begin extraction.
+Run the target application followed by the selected launcher to begin extraction.
