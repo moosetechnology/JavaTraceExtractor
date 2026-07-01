@@ -63,3 +63,7 @@ Run the target application followed by the selected launcher to begin extraction
 
 #### 3.4 Find the results
 Results are generated at the root of the JavaTraceExtractor project. The name of the resulting file is given according to the user entries in the 'outputName : [..] , extension: [..]' field of your configXX.json file. For example, in the [`config.md`](utils/tutorials/config.md) file, the name of the output file will be JDIOutput.tr.
+
+## How to use this generated trace? 
+
+This generated trace can be imported in the [Famix-JavaTrace](https://github.com/moosetechnology/Famix-JavaTrace) project and can used to contextualize call graphs in the [Famix-CallGraphs-Contextualizer](https://github.com/moosetechnology/Famix-CallGraphs-Contextualizer) project.
